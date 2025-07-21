@@ -37,7 +37,7 @@ import { useState } from "react";
 interface RequestFormProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onNewRequest: (request: ProcurementRequest) => void;
+    onNewRequest: (request: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>) => Promise<void>;
 }
 
 const formSchema = z.object({
@@ -61,28 +61,14 @@ export function RequestForm({ isOpen, onOpenChange, onNewRequest }: RequestFormP
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
         toast({ title: "Error", description: "You must be logged in to submit a request.", variant: "destructive" });
         return;
     }
 
-    const newRequest: ProcurementRequest = {
-        id: `REQ-${String(Date.now()).slice(-4)}`,
-        ...values,
-        submittedBy: user.id,
-        status: "Pending District Approval",
-        createdAt: new Date().toISOString(),
-        auditLog: [
-            {
-                action: "Submitted",
-                user: user.name,
-                date: new Date().toISOString(),
-            }
-        ]
-    };
+    await onNewRequest(values);
     
-    onNewRequest(newRequest);
     toast({
         title: "Request Submitted",
         description: `Your request for ${values.quantity}x ${values.itemName} has been submitted for approval.`,

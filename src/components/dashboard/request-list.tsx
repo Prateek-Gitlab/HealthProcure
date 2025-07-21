@@ -26,7 +26,7 @@ import { ApprovalDialog } from "./approval-dialog";
 
 interface RequestListProps {
   requests: ProcurementRequest[];
-  onUpdate: (updatedRequest: ProcurementRequest) => void;
+  onUpdate: (updatedRequest: ProcurementRequest) => Promise<void>;
 }
 
 export function RequestList({ requests, onUpdate }: RequestListProps) {

@@ -23,7 +23,7 @@ interface ApprovalDialogProps {
   action: "Approve" | "Reject";
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onUpdate: (updatedRequest: ProcurementRequest) => void;
+  onUpdate: (updatedRequest: ProcurementRequest) => Promise<void>;
 }
 
 export function ApprovalDialog({
@@ -37,7 +37,7 @@ export function ApprovalDialog({
   const [comment, setComment] = useState("");
   const { toast } = useToast();
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     let newStatus = request.status;
     if (action === "Reject") {
         newStatus = "Rejected";
@@ -63,7 +63,7 @@ export function ApprovalDialog({
         ]
     };
     
-    onUpdate(updatedRequest);
+    await onUpdate(updatedRequest);
     
     toast({
         title: `Request ${action === "Approve" ? 'Approved' : 'Rejected'}`,
