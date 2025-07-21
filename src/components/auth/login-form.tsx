@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LogIn } from "lucide-react";
+import { LogIn, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
@@ -49,8 +49,8 @@ export function LoginForm() {
         description: result.error || "An unknown error occurred.",
         variant: "destructive"
       })
+      setIsLoggingIn(false);
     }
-    setIsLoggingIn(false);
   };
 
   return (
@@ -65,7 +65,7 @@ export function LoginForm() {
         <CardContent>
           <div className="space-y-2">
             <Label htmlFor="user-select">User Profile</Label>
-            <Select onValueChange={setSelectedUserId} value={selectedUserId}>
+            <Select onValueChange={setSelectedUserId} value={selectedUserId} disabled={isLoggingIn}>
               <SelectTrigger id="user-select" className="w-full">
                 <SelectValue placeholder="Select a user..." />
               </SelectTrigger>
@@ -81,10 +81,17 @@ export function LoginForm() {
         </CardContent>
         <CardFooter>
           <Button type="submit" className="w-full" disabled={!selectedUserId || isLoggingIn}>
-            {isLoggingIn ? "Signing In..." : <>
-              <LogIn className="mr-2 h-4 w-4" />
-              Sign In
-            </>}
+            {isLoggingIn ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              <>
+                <LogIn className="mr-2 h-4 w-4" />
+                Sign In
+              </>
+            )}
           </Button>
         </CardFooter>
       </form>
