@@ -13,7 +13,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Syringe, LineChart, LogOut } from "lucide-react";
+import { LayoutDashboard, Syringe, LogOut } from "lucide-react";
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
@@ -25,13 +25,7 @@ export function AppSidebar() {
       label: "Dashboard",
       icon: LayoutDashboard,
       roles: ["base", "district", "state"],
-    },
-    {
-      href: "/dashboard/forecast",
-      label: "Demand Forecast",
-      icon: LineChart,
-      roles: ["district", "state"],
-    },
+    }
   ];
 
   return (
