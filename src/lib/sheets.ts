@@ -69,10 +69,20 @@ export async function getRequests(): Promise<ProcurementRequest[]> {
     const rows = await sheet.getRows();
     return rows.map(row => {
       const rowData = row.toObject();
+      let auditLog = [];
+      try {
+        // Ensure auditLog is parsed correctly, default to empty array if parsing fails
+        if (rowData.auditLog && typeof rowData.auditLog === 'string') {
+          auditLog = JSON.parse(rowData.auditLog);
+        }
+      } catch (e) {
+        console.error(`Failed to parse auditLog for request ID ${rowData.id}:`, e);
+        auditLog = [];
+      }
       return {
         ...rowData,
         quantity: Number(rowData.quantity),
-        auditLog: JSON.parse(rowData.auditLog || '[]'),
+        auditLog: auditLog,
       } as ProcurementRequest;
     });
   } catch (error) {
@@ -89,12 +99,14 @@ export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promis
     throw new Error("Application is not configured to connect to the database.");
   }
   const id = `REQ-${String(Date.now()).slice(-6)}`;
-  const requestWithId = { 
+  
+  const requestForSheet = { 
     ...newRequest,
     id,
-    auditLog: JSON.stringify(newRequest.auditLog) 
+    auditLog: JSON.stringify(newRequest.auditLog || []) 
   };
-  await sheet.addRow(requestWithId as any);
+
+  await sheet.addRow(requestForSheet as any);
   return { ...newRequest, id };
 }
 
