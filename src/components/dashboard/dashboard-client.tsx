@@ -31,7 +31,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     newRequestData: Omit<ProcurementRequest, "id" | "createdAt" | "auditLog" | "status" | "submittedBy">
   ) => {
     if (!user) return;
-    await addRequest(newRequestData);
+    await addRequest(newRequestData, user.id);
     // Revalidation is handled by the server action
   };
 
@@ -101,7 +101,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
             <RequestForm
               isOpen={isFormOpen}
               onOpenChange={setIsFormOpen}
-              onNewRequest={handleNewRequest}
+              onSubmit={handleNewRequest}
             />
           </>
         )}

@@ -6,10 +6,6 @@ import { users } from './data';
 import { addRow, updateRowByField } from './sheets';
 import { cookies } from 'next/headers';
 
-function getUserId() {
-    return cookies().get('health_procure_user_id')?.value ?? '';
-}
-
 export async function login(userId: string) {
   const user = users.find(u => u.id === userId);
   if (user) {
@@ -29,8 +25,10 @@ export async function logout() {
 }
 
 
-export async function addRequest(requestData: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>) {
-  const userId = getUserId();
+export async function addRequest(
+  requestData: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>,
+  userId: string
+) {
   if (!userId) {
     throw new Error('User not authenticated');
   }

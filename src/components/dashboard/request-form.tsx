@@ -37,7 +37,7 @@ import { useState } from "react";
 interface RequestFormProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
-    onNewRequest: (request: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>) => Promise<void>;
+    onSubmit: (request: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>) => Promise<void>;
 }
 
 const formSchema = z.object({
@@ -47,7 +47,7 @@ const formSchema = z.object({
   justification: z.string().min(10, "Justification must be at least 10 characters.").max(500),
 });
 
-export function RequestForm({ isOpen, onOpenChange, onNewRequest }: RequestFormProps) {
+export function RequestForm({ isOpen, onOpenChange, onSubmit }: RequestFormProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<ProcurementCategory | null>(null);
@@ -61,13 +61,13 @@ export function RequestForm({ isOpen, onOpenChange, onNewRequest }: RequestFormP
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function handleFormSubmit(values: z.infer<typeof formSchema>) {
     if (!user) {
         toast({ title: "Error", description: "You must be logged in to submit a request.", variant: "destructive" });
         return;
     }
 
-    await onNewRequest(values);
+    await onSubmit(values);
     
     toast({
         title: "Request Submitted",
@@ -101,7 +101,7 @@ export function RequestForm({ isOpen, onOpenChange, onNewRequest }: RequestFormP
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
             <FormField
               control={form.control}
               name="category"
