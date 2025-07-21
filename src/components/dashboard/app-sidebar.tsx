@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -11,7 +12,9 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarFooter,
+  SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, Syringe, LogOut } from "lucide-react";
 
@@ -27,6 +30,13 @@ export function AppSidebar() {
       roles: ["base", "district", "state"],
     }
   ];
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("");
+  };
 
   return (
     <Sidebar>
@@ -60,9 +70,26 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
+         {user && (
+          <>
+            <SidebarSeparator />
+            <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:size-8">
+              <Avatar className="size-8">
+                <AvatarImage src={`https://placehold.co/40x40.png`} alt={user.name} data-ai-hint="profile avatar" />
+                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                <p className="font-semibold text-sm">{user.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {user.role} Level
+                </p>
+              </div>
+            </div>
+          </>
+        )}
          <Button variant="ghost" className="justify-start gap-2" onClick={logout}>
-            <LogOut className="w-4 h-4" />
-            <span>Logout</span>
+            <LogOut />
+            <span className="group-data-[collapsible=icon]:hidden">Logout</span>
         </Button>
       </SidebarFooter>
     </Sidebar>
