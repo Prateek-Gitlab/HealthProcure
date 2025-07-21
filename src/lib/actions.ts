@@ -21,18 +21,18 @@ export async function addRequest(requestData: Omit<ProcurementRequest, 'id' | 'c
     throw new Error('User not found');
   }
 
-  const newRequest: Omit<ProcurementRequest, 'id'> = {
+  const newRequest: Omit<ProcurementRequest, 'id'> & { auditLog: string } = {
     ...requestData,
     submittedBy: user.id,
     status: 'Pending District Approval',
     createdAt: new Date().toISOString(),
-    auditLog: [
+    auditLog: JSON.stringify([
       {
         action: 'Submitted',
         user: user.name,
         date: new Date().toISOString(),
       },
-    ],
+    ]),
   };
   
   await addRow(newRequest);

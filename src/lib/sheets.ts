@@ -91,7 +91,7 @@ export async function getRequests(): Promise<ProcurementRequest[]> {
   }
 }
 
-export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promise<ProcurementRequest> {
+export async function addRow(newRequest: Omit<ProcurementRequest, 'id' | 'auditLog'> & { auditLog: string }): Promise<ProcurementRequest> {
   const sheet = await getSheet();
   if (!sheet) {
     console.error("Cannot add row, Google Sheets is not configured.");
@@ -103,11 +103,10 @@ export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promis
   const requestForSheet = { 
     ...newRequest,
     id,
-    auditLog: JSON.stringify(newRequest.auditLog || []) 
   };
 
   await sheet.addRow(requestForSheet as any);
-  return { ...newRequest, id };
+  return { ...newRequest, id, auditLog: JSON.parse(newRequest.auditLog) };
 }
 
 export async function updateRowByField(field: keyof ProcurementRequest, value: any, updatedData: Partial<ProcurementRequest>) {
