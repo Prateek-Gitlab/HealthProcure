@@ -1,11 +1,14 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { useAuth } from "@/contexts/auth-context";
-import { type ProcurementRequest, procurementCategories, getItemsForCategory, type ProcurementCategory } from "@/lib/data";
-import { useToast } from "@/hooks/use-toast";
+import {
+  procurementCategories,
+  getItemsForCategory,
+  type ProcurementCategory,
+} from "@/lib/data";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,8 +26,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -33,46 +34,38 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { MultiSelectItem } from "./multi-select-item";
 
 interface RequestFormProps {
-    isOpen: boolean;
-    onOpenChange: (isOpen: boolean) => void;
-    onSubmit: (request: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>) => Promise<void>;
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  onItemsSelected: (items: string[], category: ProcurementCategory) => void;
 }
 
 const formSchema = z.object({
-  category: z.enum(procurementCategories, { required_error: "Please select a category." }),
-  itemName: z.string().min(1, "Please select an item."),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
-  justification: z.string().min(10, "Justification must be at least 10 characters.").max(500),
+  category: z.enum(procurementCategories, {
+    required_error: "Please select a category.",
+  }),
+  items: z.array(z.string()).min(1, "Please select at least one item."),
 });
 
-export function RequestForm({ isOpen, onOpenChange, onSubmit }: RequestFormProps) {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const [selectedCategory, setSelectedCategory] = useState<ProcurementCategory | null>(null);
-  
+export function RequestForm({
+  isOpen,
+  onOpenChange,
+  onItemsSelected,
+}: RequestFormProps) {
+  const [selectedCategory, setSelectedCategory] =
+    useState<ProcurementCategory | null>(null);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      itemName: "",
-      quantity: 1,
-      justification: "",
+      items: [],
     },
   });
 
-  async function handleFormSubmit(values: z.infer<typeof formSchema>) {
-    if (!user) {
-        toast({ title: "Error", description: "You must be logged in to submit a request.", variant: "destructive" });
-        return;
-    }
-
-    await onSubmit(values);
-    
-    toast({
-        title: "Request Submitted",
-        description: `Your request for ${values.quantity}x ${values.itemName} has been submitted for approval.`,
-    });
+  function handleFormSubmit(values: z.infer<typeof formSchema>) {
+    onItemsSelected(values.items, values.category);
     form.reset();
     setSelectedCategory(null);
     onOpenChange(false);
@@ -81,34 +74,44 @@ export function RequestForm({ isOpen, onOpenChange, onSubmit }: RequestFormProps
   const handleCategoryChange = (value: string) => {
     const category = value as ProcurementCategory;
     setSelectedCategory(category);
-    form.setValue('category', category);
-    form.setValue('itemName', ''); // Reset item when category changes
-  }
+    form.setValue("category", category);
+    form.setValue("items", []); // Reset items when category changes
+  };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      if (!open) {
-        form.reset();
-        setSelectedCategory(null);
-      }
-      onOpenChange(open);
-    }}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          form.reset();
+          setSelectedCategory(null);
+        }
+        onOpenChange(open);
+      }}
+    >
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>New Procurement Request</DialogTitle>
+          <DialogTitle>Add Items to Request</DialogTitle>
           <DialogDescription>
-            Fill out the details below to request medical supplies, personnel, or other items.
+            Select a category, then choose one or more items to add to your new
+            request list.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-4 py-4">
+          <form
+            onSubmit={form.handleSubmit(handleFormSubmit)}
+            className="space-y-4 py-4"
+          >
             <FormField
               control={form.control}
               name="category"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={handleCategoryChange} defaultValue={field.value}>
+                  <Select
+                    onValueChange={handleCategoryChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a request category" />
@@ -126,62 +129,40 @@ export function RequestForm({ isOpen, onOpenChange, onSubmit }: RequestFormProps
                 </FormItem>
               )}
             />
-             <FormField
-              control={form.control}
-              name="itemName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Item</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCategory}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={selectedCategory ? "Select an item" : "Select a category first"} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {selectedCategory && getItemsForCategory(selectedCategory).map((item) => (
-                        <SelectItem key={item} value={item}>
-                          {item}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
-              name="quantity"
+              name="items"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Quantity</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="e.g., 100" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="justification"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Justification</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Explain why this request is necessary..."
-                      {...field}
-                    />
-                  </FormControl>
+                  <FormLabel>Items</FormLabel>
+                  <MultiSelectItem
+                    options={
+                      selectedCategory
+                        ? getItemsForCategory(selectedCategory)
+                        : []
+                    }
+                    selected={field.value}
+                    onChange={field.onChange}
+                    disabled={!selectedCategory}
+                    placeholder={
+                      selectedCategory
+                        ? "Select items..."
+                        : "Select a category first"
+                    }
+                  />
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-              <Button type="submit">Submit Request</Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit">Add Selected Items</Button>
             </DialogFooter>
           </form>
         </Form>

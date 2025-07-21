@@ -1,7 +1,8 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { ProcurementRequest } from './data';
+import type { ProcurementRequest, ProcurementCategory } from './data';
 import { users } from './data';
 import { addRow, updateRowByField } from './sheets';
 import { cookies } from 'next/headers';
@@ -24,9 +25,15 @@ export async function logout() {
   cookies().delete('health_procure_user_id');
 }
 
+interface NewRequestData {
+  itemName: string;
+  category: ProcurementCategory;
+  quantity: number;
+  justification: string;
+}
 
 export async function addRequest(
-  requestData: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>,
+  requestData: NewRequestData,
   userId: string
 ) {
   if (!userId) {
@@ -55,7 +62,15 @@ export async function addRequest(
   revalidatePath('/dashboard');
 }
 
-export async function updateRequest(request: ProcurementRequest) {
-    await updateRowByField('id', request.id, request);
-    revalidatePath('/dashboard');
+export async function updateRequest(request: ProcurementRequest, userId: string) {
+  if (!userId) {
+    throw new Error('User not authenticated');
+  }
+  const user = users.find(u => u.id === userId);
+  if (!user) {
+    throw new Error('User not found');
+  }
+  
+  await updateRowByField('id', request.id, request);
+  revalidatePath('/dashboard');
 }

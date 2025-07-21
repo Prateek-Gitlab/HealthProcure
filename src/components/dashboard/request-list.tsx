@@ -1,8 +1,10 @@
+
 "use client";
 
 import { useState } from "react";
 import type { ProcurementRequest } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
+import { updateRequest } from "@/lib/actions";
 import {
   Table,
   TableBody,
@@ -29,7 +31,7 @@ interface RequestListProps {
   onUpdate: (updatedRequest: ProcurementRequest) => Promise<void>;
 }
 
-export function RequestList({ requests, onUpdate }: RequestListProps) {
+export function RequestList({ requests }: RequestListProps) {
   const { user } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState<ProcurementRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -39,6 +41,11 @@ export function RequestList({ requests, onUpdate }: RequestListProps) {
   const handleViewDetails = (request: ProcurementRequest) => {
     setSelectedRequest(request);
     setIsDetailsOpen(true);
+  };
+  
+  const handleUpdateRequest = async (updatedRequest: ProcurementRequest) => {
+    if (!user) return;
+    await updateRequest(updatedRequest, user.id);
   };
 
   const handleApprovalAction = (request: ProcurementRequest, action: "Approve" | "Reject") => {
@@ -140,7 +147,7 @@ export function RequestList({ requests, onUpdate }: RequestListProps) {
           action={approvalAction}
           isOpen={isApprovalOpen}
           onOpenChange={setIsApprovalOpen}
-          onUpdate={onUpdate}
+          onUpdate={handleUpdateRequest}
         />
       )}
     </>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -55,7 +56,7 @@ export function ApprovalDialog({
         auditLog: [
             ...request.auditLog,
             {
-                action: action === "Approve" ? 'Approved' : 'Rejected',
+                action: action === "Approve" ? `Approved by ${user.role}` : `Rejected by ${user.role}`,
                 user: user.name,
                 date: new Date().toISOString(),
                 comment: comment || undefined,
