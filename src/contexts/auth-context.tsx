@@ -16,13 +16,14 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 const COOKIE_NAME = "health_procure_user_id";
 
+// Simplified function to get a cookie's value
 function getCookie(name: string): string | null {
-    const nameEQ = name + "=";
-    const ca = document.cookie.split(';');
-    for(let i=0; i < ca.length; i++) {
-        let c = ca[i];
-        while (c.charAt(0) === ' ') c = c.substring(1,c.length);
-        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length,c.length);
+    if (typeof document === 'undefined') {
+        return null;
+    }
+    const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
+    if (match) {
+        return match[2];
     }
     return null;
 }
@@ -48,16 +49,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const foundUser = users.find((u) => u.id === userId);
     if (foundUser) {
       setUser(foundUser);
-      // Set cookie for 7 days, accessible by server
-      document.cookie = `${COOKIE_NAME}=${userId}; Max-Age=${60*60*24*7}; path=/`;
+      // Set cookie for 7 days, accessible by server. Path=/ makes it available across the site.
+      document.cookie = `${COOKIE_NAME}=${userId}; max-age=${60*60*24*7}; path=/;`;
       router.push("/dashboard");
     }
   };
 
   const logout = () => {
     setUser(null);
-    // Erase cookie by setting Max-Age to 0
-    document.cookie = `${COOKIE_NAME}=; Max-Age=0; path=/`;
+    // Erase cookie by setting max-age to 0
+    document.cookie = `${COOKIE_NAME}=; max-age=0; path=/;`;
     router.push("/");
   };
 
