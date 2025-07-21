@@ -26,11 +26,11 @@ import { ApprovalDialog } from "./approval-dialog";
 
 interface RequestListProps {
   requests: ProcurementRequest[];
+  onUpdate: (updatedRequest: ProcurementRequest) => void;
 }
 
-export function RequestList({ requests: initialRequests }: RequestListProps) {
+export function RequestList({ requests, onUpdate }: RequestListProps) {
   const { user } = useAuth();
-  const [requests, setRequests] = useState(initialRequests);
   const [selectedRequest, setSelectedRequest] = useState<ProcurementRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
@@ -46,11 +46,6 @@ export function RequestList({ requests: initialRequests }: RequestListProps) {
     setApprovalAction(action);
     setIsApprovalOpen(true);
   };
-
-  const handleUpdateRequest = (updatedRequest: ProcurementRequest) => {
-    setRequests(prev => prev.map(r => r.id === updatedRequest.id ? updatedRequest : r));
-  };
-
 
   if (requests.length === 0) {
     return (
@@ -143,7 +138,7 @@ export function RequestList({ requests: initialRequests }: RequestListProps) {
           action={approvalAction}
           isOpen={isApprovalOpen}
           onOpenChange={setIsApprovalOpen}
-          onUpdate={handleUpdateRequest}
+          onUpdate={onUpdate}
         />
       )}
     </>

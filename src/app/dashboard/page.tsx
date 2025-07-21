@@ -1,18 +1,30 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
-import { requests, users, ProcurementRequest } from "@/lib/data";
+import { users, ProcurementRequest, getStoredRequests, saveStoredRequests } from "@/lib/data";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RequestList } from "@/components/dashboard/request-list";
 import { RequestForm } from "@/components/dashboard/request-form";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
   const { user } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [allRequests, setAllRequests] = useState<ProcurementRequest[]>(requests);
+  const [allRequests, setAllRequests] = useState<ProcurementRequest[]>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  useEffect(() => {
+    setAllRequests(getStoredRequests());
+    setIsLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (isLoaded) {
+      saveStoredRequests(allRequests);
+    }
+  }, [allRequests, isLoaded]);
 
   if (!user) return null;
 
@@ -20,7 +32,12 @@ export default function DashboardPage() {
     setAllRequests(prev => [newRequest, ...prev]);
   };
 
+  const handleUpdateRequest = (updatedRequest: ProcurementRequest) => {
+    setAllRequests(prev => prev.map(r => r.id === updatedRequest.id ? updatedRequest : r));
+  };
+
   const visibleRequests = () => {
+    if (!isLoaded) return [];
     switch (user.role) {
       case "state":
         return allRequests.filter(
@@ -81,7 +98,7 @@ export default function DashboardPage() {
         )}
       </div>
       
-      <RequestList requests={visibleRequests()} />
+      <RequestList requests={visibleRequests()} onUpdate={handleUpdateRequest} />
     </div>
   );
 }
