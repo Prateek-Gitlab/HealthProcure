@@ -26,7 +26,7 @@ export function AppHeader() {
       {user && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="flex items-center gap-3 h-auto p-1 rounded-full">
+            <Button variant="secondary" className="flex items-center gap-3 h-auto px-3 py-2 rounded-lg">
               <div className="text-right hidden sm:block">
                 <p className="font-semibold text-sm">{user.name}</p>
                 <p className="text-xs text-muted-foreground capitalize">
