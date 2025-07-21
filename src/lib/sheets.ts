@@ -58,7 +58,6 @@ export async function getRequests(): Promise<ProcurementRequest[]> {
   if (!sheet) return [];
   
   try {
-    await sheet.loadHeaderRow();
     const rows = await sheet.getRows();
     return rows.map(row => {
       const rowData = row.toObject();
@@ -87,16 +86,25 @@ export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promis
   if (!sheet) {
     throw new Error("Application is not configured to connect to the database.");
   }
-  const id = `REQ-${String(Date.now()).slice(-6)}`;
-  
-  const requestForSheet = { 
-    ...newRequest,
-    id,
-    auditLog: JSON.stringify(newRequest.auditLog),
-  };
 
-  await sheet.addRow(requestForSheet);
-  return { ...newRequest, id };
+  const id = `REQ-${String(Date.now()).slice(-6)}`;
+  const requestWithId = { ...newRequest, id };
+
+  const rowData: { [key: string]: string | number | boolean } = {};
+  for (const header of headers) {
+      const key = header as keyof ProcurementRequest;
+      if (key in requestWithId) {
+          const value = requestWithId[key];
+          if (key === 'auditLog' && Array.isArray(value)) {
+              rowData[key] = JSON.stringify(value);
+          } else if (value !== undefined) {
+              rowData[key] = value as string | number | boolean;
+          }
+      }
+  }
+
+  await sheet.addRow(rowData);
+  return requestWithId;
 }
 
 export async function updateRowByField(field: keyof ProcurementRequest, value: any, updatedData: Partial<ProcurementRequest>) {
