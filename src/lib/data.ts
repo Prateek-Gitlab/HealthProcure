@@ -1,3 +1,4 @@
+
 export type Role = 'base' | 'district' | 'state';
 
 export interface User {
@@ -41,25 +42,25 @@ export const users: User[] = [
   {id: 'district-2', name: 'South District Chief', role: 'district'},
   {
     id: 'base-1',
-    name: 'Clinic A Manager',
+    name: 'PHC1',
     role: 'base',
     reportsTo: 'district-1',
   },
   {
     id: 'base-2',
-    name: 'Clinic B Manager',
+    name: 'PHC2',
     role: 'base',
     reportsTo: 'district-1',
   },
   {
     id: 'base-3',
-    name: 'Hospital C Lead',
+    name: 'PHC3',
     role: 'base',
     reportsTo: 'district-2',
   },
   {
     id: 'base-4',
-    name: 'Hospital D Lead',
+    name: 'PHC4',
     role: 'base',
     reportsTo: 'district-2',
   },
@@ -136,7 +137,7 @@ export const initialRequests: ProcurementRequest[] = [
     auditLog: [
       {
         action: 'Submitted',
-        user: 'Clinic A Manager',
+        user: 'PHC1',
         date: new Date(new Date().setDate(now.getDate() - 10)).toISOString(),
       },
     ],
@@ -153,7 +154,7 @@ export const initialRequests: ProcurementRequest[] = [
     auditLog: [
       {
         action: 'Submitted',
-        user: 'Clinic B Manager',
+        user: 'PHC2',
         date: new Date(new Date().setDate(now.getDate() - 8)).toISOString(),
       },
       {
@@ -178,7 +179,7 @@ export const initialRequests: ProcurementRequest[] = [
     auditLog: [
       {
         action: 'Submitted',
-        user: 'Hospital C Lead',
+        user: 'PHC3',
         date: new Date(new Date().setDate(now.getDate() - 5)).toISOString(),
       },
       {
@@ -207,7 +208,7 @@ export const initialRequests: ProcurementRequest[] = [
     auditLog: [
       {
         action: 'Submitted',
-        user: 'Hospital D Lead',
+        user: 'PHC4',
         date: new Date(new Date().setDate(now.getDate() - 2)).toISOString(),
       },
       {
