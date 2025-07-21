@@ -14,6 +14,20 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+function setCookie(name: string, value: string, days: number) {
+    let expires = "";
+    if (days) {
+        const date = new Date();
+        date.setTime(date.getTime() + (days*24*60*60*1000));
+        expires = "; expires=" + date.toUTCString();
+    }
+    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
+}
+
+function eraseCookie(name: string) {   
+    document.cookie = name+'=; Max-Age=-99999999;';  
+}
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -40,6 +54,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     if (foundUser) {
       setUser(foundUser);
       localStorage.setItem("health_procure_user_id", userId);
+      setCookie("health_procure_user_id", userId, 7); // Set cookie for server actions
       router.push("/dashboard");
     }
   };
@@ -47,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const logout = () => {
     setUser(null);
     localStorage.removeItem("health_procure_user_id");
+    eraseCookie("health_procure_user_id"); // Erase cookie
     router.push("/");
   };
 
