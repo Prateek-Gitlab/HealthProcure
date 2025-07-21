@@ -10,6 +10,25 @@ function getUserId() {
     return cookies().get('health_procure_user_id')?.value ?? '';
 }
 
+export async function login(userId: string) {
+  const user = users.find(u => u.id === userId);
+  if (user) {
+    cookies().set('health_procure_user_id', userId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 7, // 1 week
+      path: '/',
+    });
+    return { success: true };
+  }
+  return { success: false, error: 'User not found' };
+}
+
+export async function logout() {
+  cookies().delete('health_procure_user_id');
+}
+
+
 export async function addRequest(requestData: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>) {
   const userId = getUserId();
   if (!userId) {

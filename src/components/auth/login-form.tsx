@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { users } from "@/lib/data";
+import { login as loginAction } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -22,17 +23,34 @@ import {
 } from "@/components/ui/select";
 import { LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
 
 export function LoginForm() {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const { login } = useAuth();
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { login: loginContext } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedUserId) {
-      login(selectedUserId);
+    if (!selectedUserId) return;
+
+    setIsLoggingIn(true);
+    const result = await loginAction(selectedUserId);
+    
+    if (result.success) {
+      loginContext(selectedUserId); // Update client-side context
+      router.push("/dashboard");
+      router.refresh(); // Refresh to ensure server-side data is up-to-date
+    } else {
+      toast({
+        title: "Login Failed",
+        description: result.error || "An unknown error occurred.",
+        variant: "destructive"
+      })
     }
+    setIsLoggingIn(false);
   };
 
   return (
@@ -62,9 +80,11 @@ export function LoginForm() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" className="w-full" disabled={!selectedUserId}>
-            <LogIn className="mr-2 h-4 w-4" />
-            Sign In
+          <Button type="submit" className="w-full" disabled={!selectedUserId || isLoggingIn}>
+            {isLoggingIn ? "Signing In..." : <>
+              <LogIn className="mr-2 h-4 w-4" />
+              Sign In
+            </>}
           </Button>
         </CardFooter>
       </form>
