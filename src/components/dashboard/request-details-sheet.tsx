@@ -67,7 +67,7 @@ export function RequestDetailsSheet({
 
                     <div>
                         <h3 className="font-semibold mb-4">Request Status</h3>
-                        <RequestStatusStepper currentStatus={request.status} />
+                        <RequestStatusStepper currentStatus={request.status} auditLog={request.auditLog} />
                     </div>
 
                     <Separator />

@@ -1,9 +1,10 @@
 import { cn } from "@/lib/utils";
-import type { RequestStatus } from "@/lib/data";
+import type { RequestStatus, ProcurementRequest } from "@/lib/data";
 import { Check, Hourglass, ThumbsUp, X } from "lucide-react";
 
 interface RequestStatusStepperProps {
   currentStatus: RequestStatus;
+  auditLog: ProcurementRequest['auditLog'];
 }
 
 const steps = [
@@ -18,6 +19,7 @@ const steps = [
 
 export function RequestStatusStepper({
   currentStatus,
+  auditLog
 }: RequestStatusStepperProps) {
   const getStepStatus = (stepName: string) => {
     if (currentStatus === "Rejected") {
@@ -27,7 +29,7 @@ export function RequestStatusStepper({
         stepName === "State Approval"
       ) {
         const lastCompletedStepBeforeRejection =
-          request.auditLog
+          auditLog
             .filter((l) => l.action === "Approved")
             .pop()?.user.includes("District")
             ? "District Approval"
@@ -87,7 +89,35 @@ export function RequestStatusStepper({
   };
 
   const isStepCompleted = (stepName: string) => {
-    return getStepStatus(stepName) === "completed";
+    const currentStepIndex = steps.findIndex((s) => s.name === stepName);
+    if (currentStepIndex === -1) return false;
+
+    // The first step "Submitted" is always considered completed as a baseline
+    if (currentStepIndex === 0) return true;
+
+    // For rejection cases
+    if (currentStatus === "Rejected") {
+        const lastApprovedLog = auditLog.filter(l => l.action === 'Approved').pop();
+        if (!lastApprovedLog) return false;
+        
+        if (lastApprovedLog.user.includes('District')) {
+             return currentStepIndex <= 1;
+        }
+        if (lastApprovedLog.user.includes('State')) {
+            return currentStepIndex <=2;
+        }
+        return false;
+    }
+    
+    // For normal flow
+    const requiredStatusForCompletion = steps[currentStepIndex-1].statuses[0];
+    if(!requiredStatusForCompletion) return true;
+
+    const allStatuses = steps.flatMap(s => s.statuses);
+    const currentStatusIndex = allStatuses.indexOf(currentStatus);
+    const requiredStatusIndex = allStatuses.indexOf(requiredStatusForCompletion);
+
+    return currentStatusIndex >= requiredStatusIndex;
   };
 
   return (

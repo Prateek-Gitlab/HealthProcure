@@ -14,27 +14,15 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-function setCookie(name: string, value: string, days: number) {
-    let expires = "";
-    if (days) {
-        const date = new Date();
-        date.setTime(date.getTime() + (days*24*60*60*1000));
-        expires = "; expires=" + date.toUTCString();
-    }
-    document.cookie = name + "=" + (value || "")  + expires + "; path=/";
-}
+const COOKIE_NAME = "health_procure_user_id";
 
-function eraseCookie(name: string) {   
-    document.cookie = name+'=; Max-Age=-99999999; path=/';  
-}
-
-function getCookie(name: string) {
+function getCookie(name: string): string | null {
     const nameEQ = name + "=";
     const ca = document.cookie.split(';');
-    for(let i=0;i < ca.length;i++) {
+    for(let i=0; i < ca.length; i++) {
         let c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1,c.length);
-        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+        while (c.charAt(0) === ' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length,c.length);
     }
     return null;
 }
@@ -48,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     // On initial load, check for the user ID from the cookie
-    const userId = getCookie("health_procure_user_id");
+    const userId = getCookie(COOKIE_NAME);
     if (userId) {
       const foundUser = users.find((u) => u.id === userId);
       setUser(foundUser || null);
@@ -60,14 +48,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const foundUser = users.find((u) => u.id === userId);
     if (foundUser) {
       setUser(foundUser);
-      setCookie("health_procure_user_id", userId, 7); // Set cookie for server actions
+      // Set cookie for 7 days, accessible by server
+      document.cookie = `${COOKIE_NAME}=${userId}; Max-Age=${60*60*24*7}; path=/`;
       router.push("/dashboard");
     }
   };
 
   const logout = () => {
     setUser(null);
-    eraseCookie("health_procure_user_id"); // Erase cookie
+    // Erase cookie by setting Max-Age to 0
+    document.cookie = `${COOKIE_NAME}=; Max-Age=0; path=/`;
     router.push("/");
   };
 
