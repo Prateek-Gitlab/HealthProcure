@@ -20,8 +20,12 @@ export type RequestStatus =
   | 'Approved'
   | 'Rejected';
 
+export const procurementCategories = ['HR', 'Infrastructure', 'Equipment', 'Training'] as const;
+export type ProcurementCategory = typeof procurementCategories[number];
+
 export interface ProcurementRequest {
   id: string;
+  category: ProcurementCategory;
   itemName: string;
   quantity: number;
   justification: string;
@@ -61,7 +65,29 @@ export const users: User[] = [
   },
 ];
 
-export const medicalItems = [
+const hrItems = [
+  'Medical Officer (MBBS)',
+  'AYUSH MO',
+  'Staff Nurse',
+  'Pharmacist',
+  'Lab Technician',
+  'FHS',
+  'FHW',
+  'MPHW',
+  'Accountant/DEO',
+  'Peon',
+  'Sweeper',
+  'Security',
+];
+
+const infrastructureItems = [
+  'New Building Construction',
+  'Building Renovation',
+  'Plumbing/Electrical Work',
+  'Furniture',
+];
+
+const equipmentItems = [
   'Ibuprofen 200mg',
   'Amoxicillin 500mg',
   'Sterile Gauze Pads',
@@ -72,11 +98,35 @@ export const medicalItems = [
   'Digital Thermometers',
 ];
 
+const trainingItems = [
+  'CPR Training',
+  'Advanced First Aid',
+  'Medical Software Training',
+  'New Equipment Training',
+];
+
+export const categorizedItems = {
+  HR: hrItems,
+  Infrastructure: infrastructureItems,
+  Equipment: equipmentItems,
+  Training: trainingItems,
+}
+
+export function getItemsForCategory(category: ProcurementCategory): string[] {
+  return categorizedItems[category] || [];
+}
+
+/**
+ * @deprecated The `medicalItems` export is deprecated. Use `categorizedItems` or `getItemsForCategory` instead.
+ */
+export const medicalItems = equipmentItems;
+
 const now = new Date();
 
 export const initialRequests: ProcurementRequest[] = [
   {
     id: 'REQ-001',
+    category: 'Equipment',
     itemName: 'Nitrile Examination Gloves',
     quantity: 5000,
     justification: 'Quarterly restock for all examination rooms.',
@@ -93,6 +143,7 @@ export const initialRequests: ProcurementRequest[] = [
   },
   {
     id: 'REQ-002',
+    category: 'Equipment',
     itemName: 'Ibuprofen 200mg',
     quantity: 10000,
     justification: 'High demand due to seasonal flu outbreak.',
@@ -116,6 +167,7 @@ export const initialRequests: ProcurementRequest[] = [
   },
   {
     id: 'REQ-003',
+    category: 'Equipment',
     itemName: 'Surgical Masks',
     quantity: 20000,
     justification:
@@ -145,6 +197,7 @@ export const initialRequests: ProcurementRequest[] = [
   },
   {
     id: 'REQ-004',
+    category: 'Equipment',
     itemName: 'Saline Solution IV Bags',
     quantity: 500,
     justification: 'Urgent need for the emergency department.',
@@ -177,7 +230,12 @@ export function getStoredRequests(): ProcurementRequest[] {
   try {
     const stored = window.localStorage.getItem(REQUESTS_STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Backwards compatibility for requests created before categories
+      return parsed.map((req: any) => ({
+        ...req,
+        category: req.category || 'Equipment'
+      }));
     } else {
       window.localStorage.setItem(
         REQUESTS_STORAGE_KEY,

@@ -43,6 +43,8 @@ export function RequestDetailsSheet({
                     <div>
                         <h3 className="font-semibold mb-2">Item Details</h3>
                         <div className="grid grid-cols-2 gap-2 text-sm">
+                            <p className="text-muted-foreground">Category</p>
+                            <p className="font-medium">{request.category}</p>
                             <p className="text-muted-foreground">Item Name</p>
                             <p className="font-medium">{request.itemName}</p>
                             <p className="text-muted-foreground">Quantity</p>

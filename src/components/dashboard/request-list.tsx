@@ -83,6 +83,7 @@ export function RequestList({ requests, onUpdate }: RequestListProps) {
             <TableHeader>
               <TableRow>
                 <TableHead>Request ID</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Item</TableHead>
                 <TableHead className="text-right">Quantity</TableHead>
                 <TableHead>Status</TableHead>
@@ -93,6 +94,7 @@ export function RequestList({ requests, onUpdate }: RequestListProps) {
               {requests.map((request) => (
                 <TableRow key={request.id}>
                   <TableCell className="font-medium">{request.id}</TableCell>
+                  <TableCell>{request.category}</TableCell>
                   <TableCell>{request.itemName}</TableCell>
                   <TableCell className="text-right">{request.quantity.toLocaleString()}</TableCell>
                   <TableCell>
