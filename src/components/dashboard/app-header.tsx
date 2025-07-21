@@ -3,9 +3,19 @@
 import { useAuth } from "@/contexts/auth-context";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { LogOut, User as UserIcon } from "lucide-react";
 
 export function AppHeader() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
 
   const getInitials = (name: string) => {
     return name
@@ -21,18 +31,35 @@ export function AppHeader() {
         <h1 className="text-xl font-semibold hidden md:block">Dashboard</h1>
       </div>
       {user && (
-        <div className="flex items-center gap-3">
-          <div className="text-right">
-            <p className="font-semibold">{user.name}</p>
-            <p className="text-sm text-muted-foreground capitalize">
-              {user.role} Level
-            </p>
-          </div>
-          <Avatar>
-            <AvatarImage src={`https://placehold.co/40x40.png`} alt={user.name} data-ai-hint="profile avatar" />
-            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
-          </Avatar>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="flex items-center gap-3 h-auto p-1 rounded-full">
+              <div className="text-right hidden sm:block">
+                <p className="font-semibold text-sm">{user.name}</p>
+                <p className="text-xs text-muted-foreground capitalize">
+                  {user.role} Level
+                </p>
+              </div>
+              <Avatar>
+                <AvatarImage src={`https://placehold.co/40x40.png`} alt={user.name} data-ai-hint="profile avatar" />
+                <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+              </Avatar>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user.name}</p>
+                <p className="text-xs leading-none text-muted-foreground capitalize">{user.role}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Logout</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     </header>
   );
