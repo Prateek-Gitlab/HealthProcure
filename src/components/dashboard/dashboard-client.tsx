@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { ProcurementRequest } from "@/lib/data";
 import { users } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";

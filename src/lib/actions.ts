@@ -1,17 +1,14 @@
-"use server";
+'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { ProcurementRequest } from './data';
 import { users } from './data';
 import { addRow, updateRowByField } from './sheets';
-import { headers } from 'next/headers';
+import { cookies } from 'next/headers';
 
 function getUserId() {
-    const heads = headers();
-    // This is a placeholder for getting the real user ID
-    // In a real app, you'd get this from the session
-    const userCookie = heads.get('cookie')?.split('; ').find(c => c.startsWith('health_procure_user_id='));
-    return userCookie?.split('=')[1] ?? '';
+    // In Next.js server actions, we can access cookies using the `cookies()` function.
+    return cookies().get('health_procure_user_id')?.value ?? '';
 }
 
 export async function addRequest(requestData: Omit<ProcurementRequest, 'id' | 'createdAt' | 'auditLog' | 'status' | 'submittedBy'>) {
