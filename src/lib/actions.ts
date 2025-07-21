@@ -7,7 +7,6 @@ import { addRow, updateRowByField } from './sheets';
 import { cookies } from 'next/headers';
 
 function getUserId() {
-    // In Next.js server actions, we can access cookies using the `cookies()` function.
     return cookies().get('health_procure_user_id')?.value ?? '';
 }
 
@@ -21,18 +20,18 @@ export async function addRequest(requestData: Omit<ProcurementRequest, 'id' | 'c
     throw new Error('User not found');
   }
 
-  const newRequest: Omit<ProcurementRequest, 'id'> & { auditLog: string } = {
+  const newRequest: Omit<ProcurementRequest, 'id'> = {
     ...requestData,
     submittedBy: user.id,
     status: 'Pending District Approval',
     createdAt: new Date().toISOString(),
-    auditLog: JSON.stringify([
+    auditLog: [
       {
         action: 'Submitted',
         user: user.name,
         date: new Date().toISOString(),
       },
-    ]),
+    ],
   };
   
   await addRow(newRequest);

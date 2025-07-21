@@ -53,31 +53,22 @@ async function getSheet() {
   return sheet;
 }
 
-// Ensure headers are set
-async function ensureHeaders(sheet: any) {
-    const currentHeaders = await sheet.headerValues;
-    if (!currentHeaders || currentHeaders.length === 0) {
-        await sheet.setHeaderRow(headers);
-    }
-}
-
 export async function getRequests(): Promise<ProcurementRequest[]> {
   const sheet = await getSheet();
   if (!sheet) return [];
   
   try {
+    await sheet.loadHeaderRow();
     const rows = await sheet.getRows();
     return rows.map(row => {
       const rowData = row.toObject();
       let auditLog = [];
       try {
-        // Ensure auditLog is parsed correctly, default to empty array if parsing fails
         if (rowData.auditLog && typeof rowData.auditLog === 'string') {
           auditLog = JSON.parse(rowData.auditLog);
         }
       } catch (e) {
         console.error(`Failed to parse auditLog for request ID ${rowData.id}:`, e);
-        auditLog = [];
       }
       return {
         ...rowData,
@@ -91,11 +82,9 @@ export async function getRequests(): Promise<ProcurementRequest[]> {
   }
 }
 
-export async function addRow(newRequest: Omit<ProcurementRequest, 'id' | 'auditLog'> & { auditLog: string }): Promise<ProcurementRequest> {
+export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promise<ProcurementRequest> {
   const sheet = await getSheet();
   if (!sheet) {
-    console.error("Cannot add row, Google Sheets is not configured.");
-    // In a real app, you might want to handle this more gracefully
     throw new Error("Application is not configured to connect to the database.");
   }
   const id = `REQ-${String(Date.now()).slice(-6)}`;
@@ -103,16 +92,16 @@ export async function addRow(newRequest: Omit<ProcurementRequest, 'id' | 'auditL
   const requestForSheet = { 
     ...newRequest,
     id,
+    auditLog: JSON.stringify(newRequest.auditLog),
   };
 
-  await sheet.addRow(requestForSheet as any);
-  return { ...newRequest, id, auditLog: JSON.parse(newRequest.auditLog) };
+  await sheet.addRow(requestForSheet);
+  return { ...newRequest, id };
 }
 
 export async function updateRowByField(field: keyof ProcurementRequest, value: any, updatedData: Partial<ProcurementRequest>) {
   const sheet = await getSheet();
   if (!sheet) {
-    console.error("Cannot update row, Google Sheets is not configured.");
     throw new Error("Application is not configured to connect to the database.");
   }
 
@@ -121,14 +110,15 @@ export async function updateRowByField(field: keyof ProcurementRequest, value: a
   
   if (rowIndex > -1) {
     const row = rows[rowIndex];
-    Object.keys(updatedData).forEach(key => {
-      const dataKey = key as keyof ProcurementRequest;
-      let dataValue = updatedData[dataKey];
-      if (dataKey === 'auditLog' && Array.isArray(dataValue)) {
-        dataValue = JSON.stringify(dataValue);
-      }
-      row.set(dataKey, dataValue as any);
+    const updatedDataForSheet = { ...updatedData };
+    if (updatedDataForSheet.auditLog) {
+      updatedDataForSheet.auditLog = JSON.stringify(updatedData.auditLog) as any;
+    }
+
+    Object.keys(updatedDataForSheet).forEach(key => {
+        row.set(key, (updatedDataForSheet as any)[key]);
     });
+    
     await row.save();
   } else {
     throw new Error(`Row with ${field} = ${value} not found.`);
