@@ -25,7 +25,18 @@ function setCookie(name: string, value: string, days: number) {
 }
 
 function eraseCookie(name: string) {   
-    document.cookie = name+'=; Max-Age=-99999999;';  
+    document.cookie = name+'=; Max-Age=-99999999; path=/';  
+}
+
+function getCookie(name: string) {
+    const nameEQ = name + "=";
+    const ca = document.cookie.split(';');
+    for(let i=0;i < ca.length;i++) {
+        let c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1,c.length);
+        if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length,c.length);
+    }
+    return null;
 }
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
@@ -36,24 +47,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const storedUserId = localStorage.getItem("health_procure_user_id");
-      if (storedUserId) {
-        const foundUser = users.find((u) => u.id === storedUserId);
-        setUser(foundUser || null);
-      }
-    } catch (error) {
-      console.error("Failed to access localStorage:", error);
-    } finally {
-      setIsLoading(false);
+    // On initial load, check for the user ID from the cookie
+    const userId = getCookie("health_procure_user_id");
+    if (userId) {
+      const foundUser = users.find((u) => u.id === userId);
+      setUser(foundUser || null);
     }
+    setIsLoading(false);
   }, []);
 
   const login = (userId: string) => {
     const foundUser = users.find((u) => u.id === userId);
     if (foundUser) {
       setUser(foundUser);
-      localStorage.setItem("health_procure_user_id", userId);
       setCookie("health_procure_user_id", userId, 7); // Set cookie for server actions
       router.push("/dashboard");
     }
@@ -61,7 +67,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem("health_procure_user_id");
     eraseCookie("health_procure_user_id"); // Erase cookie
     router.push("/");
   };
