@@ -10,7 +10,7 @@ import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RequestList } from "@/components/dashboard/request-list";
 import { RequestForm } from "@/components/dashboard/request-form";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Send } from "lucide-react";
+import { PlusCircle, Send, XCircle } from "lucide-react";
 import {
   Table,
   TableBody,
