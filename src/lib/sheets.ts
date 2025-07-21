@@ -7,20 +7,27 @@ import type { ProcurementRequest } from './data';
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID || '';
 const SHEET_NAME = 'ProcurementRequests';
 
-if (!process.env.GOOGLE_SHEETS_PRIVATE_KEY) {
-    throw new Error('GOOGLE_SHEETS_PRIVATE_KEY environment variable not set');
-}
-if (!process.env.GOOGLE_SHEETS_CLIENT_EMAIL) {
-    throw new Error('GOOGLE_SHEETS_CLIENT_EMAIL environment variable not set');
+function areCredsAvailable() {
+  return (
+    process.env.GOOGLE_SHEETS_PRIVATE_KEY &&
+    process.env.GOOGLE_SHEETS_CLIENT_EMAIL &&
+    process.env.GOOGLE_SHEET_ID
+  );
 }
 
-const serviceAccountAuth = new JWT({
-  email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
-  key: process.env.GOOGLE_SHEETS_PRIVATE_KEY.replace(/\\n/g, '\n'),
-  scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-});
+async function getDoc() {
+  if (!areCredsAvailable()) {
+    console.warn("Google Sheets credentials are not available. Skipping sheet operations.");
+    return null;
+  }
+  const serviceAccountAuth = new JWT({
+    email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL,
+    key: (process.env.GOOGLE_SHEETS_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
+    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+  });
+  return new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
+}
 
-const doc = new GoogleSpreadsheet(SPREADSHEET_ID, serviceAccountAuth);
 
 const headers = [
   'id',
@@ -35,6 +42,9 @@ const headers = [
 ];
 
 async function getSheet() {
+  const doc = await getDoc();
+  if (!doc) return null;
+
   await doc.loadInfo();
   let sheet = doc.sheetsByTitle[SHEET_NAME];
   if (!sheet) {
@@ -53,19 +63,31 @@ async function ensureHeaders(sheet: any) {
 
 export async function getRequests(): Promise<ProcurementRequest[]> {
   const sheet = await getSheet();
-  const rows = await sheet.getRows();
-  return rows.map(row => {
-    const rowData = row.toObject();
-    return {
-      ...rowData,
-      quantity: Number(rowData.quantity),
-      auditLog: JSON.parse(rowData.auditLog || '[]'),
-    } as ProcurementRequest;
-  });
+  if (!sheet) return [];
+  
+  try {
+    const rows = await sheet.getRows();
+    return rows.map(row => {
+      const rowData = row.toObject();
+      return {
+        ...rowData,
+        quantity: Number(rowData.quantity),
+        auditLog: JSON.parse(rowData.auditLog || '[]'),
+      } as ProcurementRequest;
+    });
+  } catch (error) {
+    console.error("Error fetching requests from Google Sheets:", error);
+    return [];
+  }
 }
 
 export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promise<ProcurementRequest> {
   const sheet = await getSheet();
+  if (!sheet) {
+    console.error("Cannot add row, Google Sheets is not configured.");
+    // In a real app, you might want to handle this more gracefully
+    throw new Error("Application is not configured to connect to the database.");
+  }
   const id = `REQ-${String(Date.now()).slice(-6)}`;
   const requestWithId = { 
     ...newRequest,
@@ -78,6 +100,11 @@ export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promis
 
 export async function updateRowByField(field: keyof ProcurementRequest, value: any, updatedData: Partial<ProcurementRequest>) {
   const sheet = await getSheet();
+  if (!sheet) {
+    console.error("Cannot update row, Google Sheets is not configured.");
+    throw new Error("Application is not configured to connect to the database.");
+  }
+
   const rows = await sheet.getRows();
   const rowIndex = rows.findIndex(row => row.get(field) === value);
   
