@@ -1,6 +1,5 @@
 import type { ProcurementRequest, Role, RequestStatus } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FileClock, CheckCircle2, XCircle, ListTodo } from "lucide-react";
 
@@ -27,19 +26,20 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   }
 
   const cardStyle = (filter: FilterStatus) => cn(
-    "transition-all",
+    "transition-all cursor-pointer hover:border-primary/50",
     activeFilter === filter && "border-primary ring-2 ring-primary",
-    userRole !== 'base' && "cursor-pointer hover:border-primary/50"
   );
   
   const handleCardClick = (filter: FilterStatus) => {
-    if (userRole !== 'base') {
-      onFilterChange(filter);
-    }
+    onFilterChange(filter);
   }
 
+  const gridClass = userRole === 'base' 
+    ? "grid gap-4 md:grid-cols-3" 
+    : "grid gap-4 md:grid-cols-2 lg:grid-cols-4";
+
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className={gridClass}>
       <Card className={cardStyle('all')} onClick={() => handleCardClick('all')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
@@ -52,18 +52,20 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
           </p>
         </CardContent>
       </Card>
-      <Card className={cardStyle('pending')} onClick={() => onFilterChange('pending')}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{getPendingLabel()}</CardTitle>
-          <FileClock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{pendingRequests}</div>
-          <p className="text-xs text-muted-foreground">
-            Awaiting action
-          </p>
-        </CardContent>
-      </Card>
+      {userRole !== 'base' && (
+        <Card className={cardStyle('pending')} onClick={() => onFilterChange('pending')}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{getPendingLabel()}</CardTitle>
+            <FileClock className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pendingRequests}</div>
+            <p className="text-xs text-muted-foreground">
+              Awaiting action
+            </p>
+          </CardContent>
+        </Card>
+      )}
       <Card className={cardStyle('Approved')} onClick={() => handleCardClick('Approved')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Approved</CardTitle>
