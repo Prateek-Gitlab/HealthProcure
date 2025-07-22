@@ -145,31 +145,35 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     if (user.role === "base") {
       return r.submittedBy === user.id;
     }
-
-    // Get all users that report up to the current user, directly or indirectly
+    
+    // For Taluka, District, State roles
     const getSubordinateIds = (managerId: string): string[] => {
-        const directReports = allUsers.filter(u => u.reportsTo === managerId);
-        let allSubordinates = directReports.map(u => u.id);
-        directReports.forEach(report => {
-            allSubordinates = [...allSubordinates, ...getSubordinateIds(report.id)];
-        });
-        return allSubordinates;
+      const directReports = allUsers.filter(u => u.reportsTo === managerId);
+      let allSubordinates = directReports.map(u => u.id);
+      directReports.forEach(report => {
+        allSubordinates = [...allSubordinates, ...getSubordinateIds(report.id)];
+      });
+      return allSubordinates;
     };
-    
+  
     const managedUserIds = getSubordinateIds(user.id);
-    
+  
     if (user.role === 'taluka') {
-        return managedUserIds.includes(r.submittedBy);
+      return managedUserIds.includes(r.submittedBy);
     }
+  
     if (user.role === 'district') {
-        const subordinateTalukaIds = allUsers.filter(u => u.reportsTo === user.id && u.role === 'taluka').map(u => u.id);
-        const baseUserIds = allUsers.filter(u => u.role === 'base' && subordinateTalukaIds.includes(u.reportsTo || '')).map(u => u.id);
-        return r.status === 'Pending District Approval' && baseUserIds.includes(r.submittedBy);
+      // District user should see all requests from base users under their Talukas
+      const subordinateTalukaIds = allUsers.filter(u => u.reportsTo === user.id && u.role === 'taluka').map(u => u.id);
+      const baseUserIds = allUsers.filter(u => u.role === 'base' && subordinateTalukaIds.includes(u.reportsTo || '')).map(u => u.id);
+      return baseUserIds.includes(r.submittedBy);
     }
+  
     if (user.role === 'state') {
-        return true; // State user sees all
+      // State user sees all requests
+      return true;
     }
-
+  
     return false;
   });
   
