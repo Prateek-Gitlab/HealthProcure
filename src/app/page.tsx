@@ -1,11 +1,22 @@
-'use server';
+"use client";
 
 import { LoginForm } from "@/components/auth/login-form";
 import { getAllUsers } from '@/lib/data';
 import { HeartPulse } from "lucide-react";
+import { useState, useEffect } from "react";
+import { type User } from "@/lib/data";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function LoginPage() {
-  const users = await getAllUsers();
+export default function LoginPage() {
+  const [users, setUsers] = useState<User[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    getAllUsers().then(fetchedUsers => {
+      setUsers(fetchedUsers);
+      setIsLoading(false);
+    });
+  }, []);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -21,7 +32,14 @@ export default async function LoginPage() {
             Sign in to manage procurement requests.
           </p>
         </div>
-        <LoginForm users={users} />
+        {isLoading ? (
+            <div className="space-y-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        ) : (
+            <LoginForm users={users} />
+        )}
       </div>
     </main>
   );

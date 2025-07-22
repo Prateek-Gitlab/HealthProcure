@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useState, useEffect, useContext } from "react";
@@ -64,9 +65,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
     setUser(null);
-    await logoutAction();
+    logoutAction(); // Don't await this
     router.push("/");
     router.refresh();
   };
