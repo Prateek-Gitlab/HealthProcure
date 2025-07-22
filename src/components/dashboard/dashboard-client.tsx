@@ -146,18 +146,30 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       return r.submittedBy === user.id;
     }
     
+    const submittedByUser = allUsers.find(u => u.id === r.submittedBy);
+    if (!submittedByUser) return false;
+
     if (user.role === 'taluka') {
-      const baseUserIds = allUsers.filter(u => u.role === 'base' && u.reportsTo === user.id).map(u => u.id);
-      return baseUserIds.includes(r.submittedBy);
+      return submittedByUser.reportsTo === user.id;
     }
   
     if (user.role === 'district') {
+      if (r.status === 'Rejected') {
+         // A taluka user must have rejected this. Don't show it to the district user.
+         const audit = r.auditLog.find(a => a.action === 'rejected');
+         // We can be more specific and check if a taluka user in their hierarchy rejected it.
+         // For now, any rejection hides it from district view.
+         if (audit) return false;
+      }
       const subordinateTalukaIds = allUsers.filter(u => u.reportsTo === user.id && u.role === 'taluka').map(u => u.id);
-      const baseUserIds = allUsers.filter(u => u.role === 'base' && subordinateTalukaIds.includes(u.reportsTo || '')).map(u => u.id);
-      return baseUserIds.includes(r.submittedBy);
+      return subordinateTalukaIds.includes(submittedByUser.reportsTo || '');
     }
   
     if (user.role === 'state') {
+       if (r.status === 'Rejected') {
+         // A lower-level user must have rejected this. Don't show it to the state user.
+         return false;
+      }
       return true;
     }
   
