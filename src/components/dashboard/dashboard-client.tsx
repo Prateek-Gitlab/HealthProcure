@@ -159,11 +159,11 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     const managedUserIds = getSubordinateIds(user.id);
   
     if (user.role === 'taluka') {
-      return managedUserIds.includes(r.submittedBy);
+      const baseUserIds = allUsers.filter(u => u.role === 'base' && u.reportsTo === user.id).map(u => u.id);
+      return baseUserIds.includes(r.submittedBy);
     }
   
     if (user.role === 'district') {
-      // District user should see all requests from base users under their Talukas
       const subordinateTalukaIds = allUsers.filter(u => u.reportsTo === user.id && u.role === 'taluka').map(u => u.id);
       const baseUserIds = allUsers.filter(u => u.role === 'base' && subordinateTalukaIds.includes(u.reportsTo || '')).map(u => u.id);
       return baseUserIds.includes(r.submittedBy);
