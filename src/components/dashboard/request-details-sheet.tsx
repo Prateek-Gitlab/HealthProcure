@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProcurementRequest } from "@/lib/data";
-import { users } from "@/lib/data";
+import { useAuth } from "@/contexts/auth-context";
 import {
   Sheet,
   SheetContent,
@@ -25,7 +25,8 @@ export function RequestDetailsSheet({
   onOpenChange,
 }: RequestDetailsSheetProps) {
 
-  const submittedByUser = users.find(u => u.id === request.submittedBy);
+  const { allUsers } = useAuth();
+  const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>

@@ -1,4 +1,4 @@
-import { getRequests } from "./sheets";
+import { getRequests, getUsers } from "./sheets";
 
 export type Role = 'base' | 'district' | 'state';
 
@@ -37,35 +37,9 @@ export interface ProcurementRequest {
   auditLog: AuditLogEntry[];
 }
 
-export const users: User[] = [
-  {id: 'state-1', name: 'State Officer', role: 'state'},
-  {id: 'district-1', name: 'District Office 1', role: 'district'},
-  {id: 'district-2', name: 'District Office 2', role: 'district'},
-  {
-    id: 'base-1',
-    name: 'PHC1',
-    role: 'base',
-    reportsTo: 'district-1',
-  },
-  {
-    id: 'base-2',
-    name: 'PHC2',
-    role: 'base',
-    reportsTo: 'district-1',
-  },
-  {
-    id: 'base-3',
-    name: 'PHC3',
-    role: 'base',
-    reportsTo: 'district-2',
-  },
-  {
-    id: 'base-4',
-    name: 'PHC4',
-    role: 'base',
-    reportsTo: 'district-2',
-  },
-];
+export async function getAllUsers(): Promise<User[]> {
+    return getUsers();
+}
 
 const hrItems = [
   'Medical Officer (MBBS)',

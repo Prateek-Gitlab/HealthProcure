@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import type { ProcurementRequest, ProcurementCategory, RequestStatus } from "@/lib/data";
-import { users } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import { addRequest } from "@/lib/actions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
@@ -39,7 +38,7 @@ type FilterStatus = RequestStatus | 'all' | 'pending';
 
 
 export function DashboardClient({ initialRequests }: DashboardClientProps) {
-  const { user } = useAuth();
+  const { user, allUsers } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [stagedRequests, setStagedRequests] = useState<StagedRequest[]>([]);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
@@ -132,7 +131,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const allUserRequests = initialRequests.filter((r) => {
     if (user.role === "base") return r.submittedBy === user.id;
     if (user.role === "district") {
-      const managedUserIds = users
+      const managedUserIds = allUsers
         .filter((u) => u.reportsTo === user.id)
         .map((u) => u.id);
       return (
@@ -150,7 +149,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
               (r) => r.status === "Pending State Approval"
             );
           case "district":
-            const managedUserIds = users
+            const managedUserIds = allUsers
               .filter((u) => u.reportsTo === user.id)
               .map((u) => u.id);
             return allUserRequests.filter(

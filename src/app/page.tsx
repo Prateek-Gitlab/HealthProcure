@@ -1,7 +1,12 @@
+'use server';
+
 import { LoginForm } from "@/components/auth/login-form";
+import { getAllUsers } from '@/lib/data';
 import { Syringe } from "lucide-react";
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const users = await getAllUsers();
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
@@ -16,7 +21,7 @@ export default function LoginPage() {
             Sign in to manage procurement requests.
           </p>
         </div>
-        <LoginForm />
+        <LoginForm users={users} />
       </div>
     </main>
   );

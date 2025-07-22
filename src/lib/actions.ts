@@ -3,11 +3,12 @@
 
 import { revalidatePath } from 'next/cache';
 import type { ProcurementRequest, ProcurementCategory } from './data';
-import { users } from './data';
+import { getAllUsers } from './data';
 import { addRow, updateRowByField } from './sheets';
 import { cookies } from 'next/headers';
 
 export async function login(userId: string) {
+  const users = await getAllUsers();
   const user = users.find(u => u.id === userId);
   if (user) {
     cookies().set('health_procure_user_id', userId, {
@@ -39,6 +40,7 @@ export async function addRequest(
   if (!userId) {
     throw new Error('User not authenticated');
   }
+  const users = await getAllUsers();
   const user = users.find(u => u.id === userId);
   if (!user) {
     throw new Error('User not found');
@@ -66,6 +68,7 @@ export async function updateRequest(request: ProcurementRequest, userId: string)
   if (!userId) {
     throw new Error('User not authenticated');
   }
+  const users = await getAllUsers();
   const user = users.find(u => u.id === userId);
   if (!user) {
     throw new Error('User not found');

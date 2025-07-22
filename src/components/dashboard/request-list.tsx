@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import type { ProcurementRequest } from "@/lib/data";
-import { users } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import { updateRequest } from "@/lib/actions";
 import {
@@ -41,7 +40,7 @@ interface RequestListProps {
 }
 
 export function RequestList({ requests, isFiltered = false }: RequestListProps) {
-  const { user } = useAuth();
+  const { user, allUsers } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState<ProcurementRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [isApprovalOpen, setIsApprovalOpen] = useState(false);
@@ -150,10 +149,10 @@ export function RequestList({ requests, isFiltered = false }: RequestListProps) 
 
   const renderGroupedView = () => {
     const groupedRequests = requests.reduce((acc, request) => {
-      const submittedByUser = users.find(u => u.id === request.submittedBy);
+      const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
       // Group by the facility that reports to the current user, or the user's own requests
       const facilityId = submittedByUser?.role === 'base' ? submittedByUser.id : user?.id || 'unknown';
-      const facilityUser = users.find(u => u.id === facilityId);
+      const facilityUser = allUsers.find(u => u.id === facilityId);
       const facilityName = facilityUser?.name || 'My Requests';
 
       if (!acc[facilityName]) {

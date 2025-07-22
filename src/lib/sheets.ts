@@ -2,10 +2,12 @@
 
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { JWT } from 'google-auth-library';
-import type { ProcurementRequest } from './data';
+import type { ProcurementRequest, User } from './data';
 
 const SPREADSHEET_ID = process.env.GOOGLE_SHEET_ID || '';
-const SHEET_NAME = 'ProcurementRequests';
+const PROCUREMENT_SHEET_NAME = 'ProcurementRequests';
+const USERS_SHEET_NAME = 'Users';
+
 
 function areCredsAvailable() {
   return (
@@ -29,7 +31,7 @@ async function getDoc() {
 }
 
 
-const headers = [
+const procurementHeaders = [
   'id',
   'category',
   'itemName',
@@ -41,20 +43,41 @@ const headers = [
   'auditLog',
 ];
 
-async function getSheet() {
+const userHeaders = [
+    'id',
+    'name',
+    'role',
+    'reportsTo'
+];
+
+async function getSheet(sheetName: string, headers: string[]) {
   const doc = await getDoc();
   if (!doc) return null;
 
   await doc.loadInfo();
-  let sheet = doc.sheetsByTitle[SHEET_NAME];
+  let sheet = doc.sheetsByTitle[sheetName];
   if (!sheet) {
-    sheet = await doc.addSheet({ title: SHEET_NAME, headerValues: headers });
+    sheet = await doc.addSheet({ title: sheetName, headerValues: headers });
   }
   return sheet;
 }
 
+export async function getUsers(): Promise<User[]> {
+    const sheet = await getSheet(USERS_SHEET_NAME, userHeaders);
+    if (!sheet) return [];
+
+    try {
+        const rows = await sheet.getRows();
+        return rows.map(row => row.toObject() as User);
+    } catch (error) {
+        console.error("Error fetching users from Google Sheets:", error);
+        return [];
+    }
+}
+
+
 export async function getRequests(): Promise<ProcurementRequest[]> {
-  const sheet = await getSheet();
+  const sheet = await getSheet(PROCUREMENT_SHEET_NAME, procurementHeaders);
   if (!sheet) return [];
   
   try {
@@ -82,7 +105,7 @@ export async function getRequests(): Promise<ProcurementRequest[]> {
 }
 
 export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promise<ProcurementRequest> {
-  const sheet = await getSheet();
+  const sheet = await getSheet(PROCUREMENT_SHEET_NAME, procurementHeaders);
   if (!sheet) {
     throw new Error("Application is not configured to connect to the database.");
   }
@@ -91,7 +114,7 @@ export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promis
   const requestWithId = { ...newRequest, id };
 
   const rowData: { [key: string]: string | number | boolean } = {};
-  for (const header of headers) {
+  for (const header of procurementHeaders) {
       const key = header as keyof ProcurementRequest;
       if (key in requestWithId) {
           const value = requestWithId[key];
@@ -108,7 +131,7 @@ export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promis
 }
 
 export async function updateRowByField(field: keyof ProcurementRequest, value: any, updatedData: Partial<ProcurementRequest>) {
-  const sheet = await getSheet();
+  const sheet = await getSheet(PROCUREMENT_SHEET_NAME, procurementHeaders);
   if (!sheet) {
     throw new Error("Application is not configured to connect to the database.");
   }

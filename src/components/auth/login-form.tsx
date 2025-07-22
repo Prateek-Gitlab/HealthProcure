@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { users } from "@/lib/data";
+import { type User } from "@/lib/data";
 import { login as loginAction } from "@/lib/actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,7 +25,11 @@ import { LogIn, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
-export function LoginForm() {
+interface LoginFormProps {
+    users: User[];
+}
+
+export function LoginForm({ users }: LoginFormProps) {
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const { login: loginContext } = useAuth();
@@ -40,7 +44,7 @@ export function LoginForm() {
     const result = await loginAction(selectedUserId);
     
     if (result.success) {
-      loginContext(selectedUserId); // Update client-side context
+      loginContext(selectedUserId, users); // Update client-side context
       router.push("/dashboard");
       router.refresh(); // Refresh to ensure server-side data is up-to-date
     } else {
