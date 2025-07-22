@@ -10,7 +10,7 @@ import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RequestList } from "@/components/dashboard/request-list";
 import { RequestForm } from "@/components/dashboard/request-form";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Send, XCircle } from "lucide-react";
+import { PlusCircle, Send, XCircle, Loader2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -43,6 +43,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [stagedRequests, setStagedRequests] = useState<StagedRequest[]>([]);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   if (!user) {
@@ -102,19 +103,30 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         });
         return;
     }
+    
+    setIsSubmitting(true);
+    try {
+        await Promise.all(
+            validRequests.map((req) =>
+                addRequest(req, user.id)
+            )
+        );
 
-    await Promise.all(
-        validRequests.map((req) =>
-            addRequest(req, user.id)
-        )
-    );
+        toast({
+            title: "Requests Submitted",
+            description: `${validRequests.length} requests have been successfully submitted.`,
+        });
 
-    toast({
-        title: "Requests Submitted",
-        description: `${validRequests.length} requests have been successfully submitted.`,
-    });
-
-    setStagedRequests([]);
+        setStagedRequests([]);
+    } catch (error) {
+        toast({
+            title: "Submission Error",
+            description: "An unexpected error occurred while submitting requests.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   const allUserRequests = initialRequests.filter((r) => {
@@ -228,6 +240,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                                     }
                                     className="w-full"
                                     min="1"
+                                    disabled={isSubmitting}
                                 />
                                 </TableCell>
                                 <TableCell>
@@ -238,10 +251,11 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                                     }
                                     placeholder="Enter justification..."
                                     className="w-full"
+                                    disabled={isSubmitting}
                                 />
                                 </TableCell>
                                 <TableCell>
-                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveStagedRequest(index)}>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveStagedRequest(index)} disabled={isSubmitting}>
                                         <XCircle className="h-4 w-4 text-muted-foreground"/>
                                     </Button>
                                 </TableCell>
@@ -251,9 +265,18 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                     </Table>
                 </div>
                 <div className="flex justify-end mt-4">
-                  <Button onClick={handleSubmitAllStaged}>
-                    <Send className="mr-2 h-4 w-4" />
-                    Submit All Requests
+                  <Button onClick={handleSubmitAllStaged} disabled={isSubmitting || stagedRequests.length === 0}>
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Submitting...
+                        </>
+                    ) : (
+                        <>
+                            <Send className="mr-2 h-4 w-4" />
+                            Submit All Requests
+                        </>
+                    )}
                   </Button>
                 </div>
               </CardContent>
