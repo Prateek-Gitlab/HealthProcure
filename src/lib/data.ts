@@ -39,8 +39,8 @@ export interface ProcurementRequest {
 
 export const users: User[] = [
   {id: 'state-1', name: 'State Officer', role: 'state'},
-  {id: 'district-1', name: 'North District Chief', role: 'district'},
-  {id: 'district-2', name: 'South District Chief', role: 'district'},
+  {id: 'district-1', name: 'District Office 1', role: 'district'},
+  {id: 'district-2', name: 'District Office 2', role: 'district'},
   {
     id: 'base-1',
     name: 'PHC1',
