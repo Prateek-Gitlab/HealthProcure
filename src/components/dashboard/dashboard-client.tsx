@@ -39,6 +39,7 @@ type FilterStatus = RequestStatus | 'all' | 'pending';
 
 export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const { user, allUsers } = useAuth();
+  const [requests, setRequests] = useState<ProcurementRequest[]>(initialRequests);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [stagedRequests, setStagedRequests] = useState<StagedRequest[]>([]);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
@@ -48,6 +49,14 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   if (!user) {
     return null;
   }
+
+  const handleUpdateRequestInState = (updatedRequest: ProcurementRequest) => {
+    setRequests(prevRequests => 
+      prevRequests.map(req => 
+        req.id === updatedRequest.id ? updatedRequest : req
+      )
+    );
+  };
 
   const handleItemsSelected = (
     items: string[],
@@ -128,7 +137,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     }
   };
   
-  const allUserRequests = initialRequests.filter((r) => {
+  const allUserRequests = requests.filter((r) => {
     if (user.role === "base") return r.submittedBy === user.id;
     if (user.role === 'taluka' || user.role === "district") {
       const managedUserIds = allUsers
@@ -299,9 +308,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
       <RequestList
         requests={visibleRequests()}
-        onUpdate={() => {
-          /* Server action handles revalidation */
-        }}
+        onUpdate={handleUpdateRequestInState}
         isFiltered={filterStatus !== 'pending'}
       />
     </div>

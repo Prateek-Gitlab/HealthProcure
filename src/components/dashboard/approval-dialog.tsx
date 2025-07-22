@@ -18,6 +18,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
+import { updateRequest as updateRequestAction } from "@/lib/actions";
 
 interface ApprovalDialogProps {
   request: ProcurementRequest;
@@ -25,7 +26,7 @@ interface ApprovalDialogProps {
   action: "Approve" | "Reject";
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onUpdate: (updatedRequest: ProcurementRequest) => Promise<void>;
+  onUpdate: (updatedRequest: ProcurementRequest) => void;
 }
 
 export function ApprovalDialog({
@@ -74,7 +75,8 @@ export function ApprovalDialog({
     };
     
     try {
-        await onUpdate(updatedRequest);
+        await updateRequestAction(updatedRequest, user.id);
+        onUpdate(updatedRequest);
         
         toast({
             title: `Request ${action === "Approve" ? 'Approved' : 'Rejected'}`,

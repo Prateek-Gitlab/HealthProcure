@@ -4,7 +4,6 @@
 import { useState } from "react";
 import type { ProcurementRequest } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
-import { updateRequest } from "@/lib/actions";
 import {
   Table,
   TableBody,
@@ -35,11 +34,11 @@ import {
 
 interface RequestListProps {
   requests: ProcurementRequest[];
-  onUpdate: (updatedRequest: ProcurementRequest) => Promise<void>;
+  onUpdate: (updatedRequest: ProcurementRequest) => void;
   isFiltered?: boolean;
 }
 
-export function RequestList({ requests, isFiltered = false }: RequestListProps) {
+export function RequestList({ requests, onUpdate, isFiltered = false }: RequestListProps) {
   const { user, allUsers } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState<ProcurementRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -51,11 +50,6 @@ export function RequestList({ requests, isFiltered = false }: RequestListProps) 
     setIsDetailsOpen(true);
   };
   
-  const handleUpdateRequest = async (updatedRequest: ProcurementRequest) => {
-    if (!user) return;
-    await updateRequest(updatedRequest, user.id);
-  };
-
   const handleApprovalAction = (request: ProcurementRequest, action: "Approve" | "Reject") => {
     setSelectedRequest(request);
     setApprovalAction(action);
@@ -213,7 +207,7 @@ export function RequestList({ requests, isFiltered = false }: RequestListProps) 
           action={approvalAction}
           isOpen={isApprovalOpen}
           onOpenChange={setIsApprovalOpen}
-          onUpdate={handleUpdateRequest}
+          onUpdate={onUpdate}
         />
       )}
     </>
