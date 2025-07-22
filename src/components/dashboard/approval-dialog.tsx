@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
 
 interface ApprovalDialogProps {
   request: ProcurementRequest;
@@ -36,9 +37,11 @@ export function ApprovalDialog({
   onUpdate
 }: ApprovalDialogProps) {
   const [comment, setComment] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const handleConfirm = async () => {
+    setIsSubmitting(true);
     let newStatus = request.status;
     if (action === "Reject") {
         newStatus = "Rejected";
@@ -64,15 +67,25 @@ export function ApprovalDialog({
         ]
     };
     
-    await onUpdate(updatedRequest);
-    
-    toast({
-        title: `Request ${action === "Approve" ? 'Approved' : 'Rejected'}`,
-        description: `Request ${request.id} has been successfully updated.`
-    });
+    try {
+        await onUpdate(updatedRequest);
+        
+        toast({
+            title: `Request ${action === "Approve" ? 'Approved' : 'Rejected'}`,
+            description: `Request ${request.id} has been successfully updated.`
+        });
 
-    onOpenChange(false);
-    setComment("");
+        onOpenChange(false);
+        setComment("");
+    } catch (error) {
+        toast({
+            title: "Error",
+            description: "Failed to update the request. Please try again.",
+            variant: "destructive"
+        })
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -93,15 +106,24 @@ export function ApprovalDialog({
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
                 className="mt-2"
+                disabled={isSubmitting}
             />
         </div>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
           <AlertDialogAction 
             onClick={handleConfirm}
+            disabled={isSubmitting}
             className={action === 'Reject' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
           >
-            Confirm {action}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+                `Confirm ${action}`
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
