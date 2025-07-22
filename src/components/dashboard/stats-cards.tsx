@@ -1,13 +1,19 @@
-import type { ProcurementRequest, Role } from "@/lib/data";
+import type { ProcurementRequest, Role, RequestStatus } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import { FileClock, CheckCircle2, XCircle, ListTodo } from "lucide-react";
+
+type FilterStatus = RequestStatus | 'all' | 'pending';
 
 interface StatsCardsProps {
   requests: ProcurementRequest[];
   userRole: Role;
+  activeFilter: FilterStatus;
+  onFilterChange: (filter: FilterStatus) => void;
 }
 
-export function StatsCards({ requests, userRole }: StatsCardsProps) {
+export function StatsCards({ requests, userRole, activeFilter, onFilterChange }: StatsCardsProps) {
   const totalRequests = requests.length;
   const pendingRequests = requests.filter(r => r.status.includes('Pending')).length;
   const approvedRequests = requests.filter(r => r.status === 'Approved').length;
@@ -20,9 +26,21 @@ export function StatsCards({ requests, userRole }: StatsCardsProps) {
     return 'Pending';
   }
 
+  const cardStyle = (filter: FilterStatus) => cn(
+    "transition-all",
+    activeFilter === filter && "border-primary ring-2 ring-primary",
+    userRole !== 'base' && "cursor-pointer hover:border-primary/50"
+  );
+  
+  const handleCardClick = (filter: FilterStatus) => {
+    if (userRole !== 'base') {
+      onFilterChange(filter);
+    }
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      <Card>
+      <Card className={cardStyle('all')} onClick={() => handleCardClick('all')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
           <ListTodo className="h-4 w-4 text-muted-foreground" />
@@ -34,7 +52,7 @@ export function StatsCards({ requests, userRole }: StatsCardsProps) {
           </p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className={cardStyle('pending')} onClick={() => onFilterChange('pending')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{getPendingLabel()}</CardTitle>
           <FileClock className="h-4 w-4 text-muted-foreground" />
@@ -46,7 +64,7 @@ export function StatsCards({ requests, userRole }: StatsCardsProps) {
           </p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className={cardStyle('Approved')} onClick={() => handleCardClick('Approved')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Approved</CardTitle>
           <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -58,7 +76,7 @@ export function StatsCards({ requests, userRole }: StatsCardsProps) {
           </p>
         </CardContent>
       </Card>
-      <Card>
+      <Card className={cardStyle('Rejected')} onClick={() => handleCardClick('Rejected')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Rejected</CardTitle>
           <XCircle className="h-4 w-4 text-red-500" />

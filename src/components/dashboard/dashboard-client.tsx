@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ProcurementRequest, ProcurementCategory } from "@/lib/data";
+import type { ProcurementRequest, ProcurementCategory, RequestStatus } from "@/lib/data";
 import { users } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import { addRequest } from "@/lib/actions";
@@ -35,10 +35,14 @@ interface StagedRequest {
   justification: string;
 }
 
+type FilterStatus = RequestStatus | 'all' | 'pending';
+
+
 export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const { user } = useAuth();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [stagedRequests, setStagedRequests] = useState<StagedRequest[]>([]);
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
   const { toast } = useToast();
 
   if (!user) {
@@ -112,42 +116,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
     setStagedRequests([]);
   };
-
-  const visibleRequests = () => {
-    switch (user.role) {
-      case "state":
-        return initialRequests.filter(
-          (r) => r.status === "Pending State Approval"
-        );
-      case "district":
-        const managedUserIds = users
-          .filter((u) => u.reportsTo === user.id)
-          .map((u) => u.id);
-        return initialRequests.filter(
-          (r) =>
-            managedUserIds.includes(r.submittedBy) &&
-            r.status === "Pending District Approval"
-        );
-      case "base":
-        return initialRequests.filter((r) => r.submittedBy === user.id);
-      default:
-        return [];
-    }
-  };
-
-  const getTitle = () => {
-    switch (user.role) {
-      case "state":
-        return "State-Level Approval Queue";
-      case "district":
-        return "District-Level Approval Queue";
-      case "base":
-        return "My Procurement Requests";
-      default:
-        return "Procurement Requests";
-    }
-  };
-
+  
   const allUserRequests = initialRequests.filter((r) => {
     if (user.role === "base") return r.submittedBy === user.id;
     if (user.role === "district") {
@@ -160,10 +129,60 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     }
     return true; // State user sees all
   });
+  
+  const visibleRequests = () => {
+    if (filterStatus === 'pending') {
+        switch (user.role) {
+          case "state":
+            return allUserRequests.filter(
+              (r) => r.status === "Pending State Approval"
+            );
+          case "district":
+            const managedUserIds = users
+              .filter((u) => u.reportsTo === user.id)
+              .map((u) => u.id);
+            return allUserRequests.filter(
+              (r) =>
+                managedUserIds.includes(r.submittedBy) &&
+                r.status === "Pending District Approval"
+            );
+          case "base":
+            return allUserRequests.filter((r) => r.status.includes('Pending'));
+          default:
+            return [];
+        }
+    }
+    if (filterStatus === 'all') {
+        return allUserRequests;
+    }
+    return allUserRequests.filter(r => r.status === filterStatus);
+  };
+
+  const getTitle = () => {
+    switch (filterStatus) {
+        case 'pending':
+            if (user.role === 'base') return "My Pending Requests";
+            return `${user.role.charAt(0).toUpperCase() + user.role.slice(1)}-Level Approval Queue`;
+        case 'Approved':
+            return 'Approved Requests';
+        case 'Rejected':
+            return 'Rejected Requests';
+        case 'all':
+            return 'All Requests';
+        default:
+            return 'Procurement Requests';
+    }
+  };
+
 
   return (
     <div className="space-y-6">
-      <StatsCards requests={allUserRequests} userRole={user.role} />
+      <StatsCards 
+        requests={allUserRequests} 
+        userRole={user.role} 
+        activeFilter={filterStatus}
+        onFilterChange={setFilterStatus}
+      />
 
       {user.role === "base" && (
         <>
@@ -252,6 +271,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         onUpdate={() => {
           /* Server action handles revalidation */
         }}
+        isFiltered={filterStatus !== 'pending'}
       />
     </div>
   );

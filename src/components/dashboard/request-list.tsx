@@ -29,9 +29,10 @@ import { ApprovalDialog } from "./approval-dialog";
 interface RequestListProps {
   requests: ProcurementRequest[];
   onUpdate: (updatedRequest: ProcurementRequest) => Promise<void>;
+  isFiltered?: boolean;
 }
 
-export function RequestList({ requests }: RequestListProps) {
+export function RequestList({ requests, isFiltered = false }: RequestListProps) {
   const { user } = useAuth();
   const [selectedRequest, setSelectedRequest] = useState<ProcurementRequest | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -53,6 +54,13 @@ export function RequestList({ requests }: RequestListProps) {
     setApprovalAction(action);
     setIsApprovalOpen(true);
   };
+  
+  const canApproveOrReject = (request: ProcurementRequest) => {
+    if (!user || user.role === 'base') return false;
+    if (user.role === 'district' && request.status === 'Pending District Approval') return true;
+    if (user.role === 'state' && request.status === 'Pending State Approval') return true;
+    return false;
+  }
 
   if (requests.length === 0) {
     return (
@@ -60,7 +68,10 @@ export function RequestList({ requests }: RequestListProps) {
         <CardHeader>
           <CardTitle className="text-center">No Requests Found</CardTitle>
           <CardDescription className="text-center">
-            There are no procurement requests that require your attention at the moment.
+            {isFiltered 
+                ? "There are no requests matching the current filter."
+                : "There are no procurement requests that require your attention at the moment."
+            }
           </CardDescription>
         </CardHeader>
       </Card>
@@ -114,7 +125,7 @@ export function RequestList({ requests }: RequestListProps) {
                       <Eye className="h-4 w-4" />
                       <span className="sr-only">View Details</span>
                     </Button>
-                    {user?.role !== 'base' && (
+                    {canApproveOrReject(request) && (
                         <>
                             <Button variant="outline" size="icon" className="text-green-600 hover:bg-green-100 hover:text-green-700 border-green-300" onClick={() => handleApprovalAction(request, "Approve")}>
                                 <Check className="h-4 w-4" />
