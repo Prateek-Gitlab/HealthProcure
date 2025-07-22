@@ -51,13 +51,11 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   }
 
   const handleUpdateRequestInState = (updatedRequest: ProcurementRequest) => {
-    const newRequests = requests.map(req => 
-      req.id === updatedRequest.id ? updatedRequest : req
+    setRequests(currentRequests => 
+      currentRequests.map(req => 
+        req.id === updatedRequest.id ? updatedRequest : req
+      )
     );
-    setRequests(newRequests);
-
-    // Also need to refetch or manually add if a new request was added
-    // For now, this handles updates. Let's see if we need more for additions.
   };
 
   const handleItemsSelected = (
@@ -165,10 +163,10 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     const managedUserIds = getSubordinateIds(user.id);
     
     if (user.role === 'taluka') {
-        return managedUserIds.includes(r.submittedBy) || r.submittedBy === user.id;
+        return managedUserIds.includes(r.submittedBy);
     }
     if (user.role === 'district') {
-        return managedUserIds.includes(r.submittedBy) || r.submittedBy === user.id;
+        return managedUserIds.includes(r.submittedBy);
     }
     if (user.role === 'state') {
         return true; // State user sees all
