@@ -51,11 +51,13 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   }
 
   const handleUpdateRequestInState = (updatedRequest: ProcurementRequest) => {
-    setRequests(prevRequests => 
-      prevRequests.map(req => 
-        req.id === updatedRequest.id ? updatedRequest : req
-      )
+    const newRequests = requests.map(req => 
+      req.id === updatedRequest.id ? updatedRequest : req
     );
+    setRequests(newRequests);
+
+    // Also need to refetch or manually add if a new request was added
+    // For now, this handles updates. Let's see if we need more for additions.
   };
 
   const handleItemsSelected = (
@@ -114,15 +116,23 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     
     setIsSubmitting(true);
     try {
-        await Promise.all(
+        const addedRequests = await Promise.all(
             validRequests.map((req) =>
                 addRequest(req, user.id)
             )
         );
-
+        
+        // This part is tricky because addRequest returns void.
+        // For a full refresh, we would need to refetch.
+        // A simpler client-side update for now:
+        // This assumes the server action is successful and we can predict the new state.
+        // This is a temporary solution until we can get the created requests back.
+        // For now, let's just clear the staged requests and show a success message.
+        // The user will see the new requests on the next page load/refresh.
+        
         toast({
             title: "Requests Submitted",
-            description: `${validRequests.length} requests have been successfully submitted.`,
+            description: `${validRequests.length} requests have been successfully submitted. They will appear after a refresh.`,
         });
 
         setStagedRequests([]);
@@ -138,16 +148,33 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   };
   
   const allUserRequests = requests.filter((r) => {
-    if (user.role === "base") return r.submittedBy === user.id;
-    if (user.role === 'taluka' || user.role === "district") {
-      const managedUserIds = allUsers
-        .filter((u) => u.reportsTo === user.id)
-        .map((u) => u.id);
-      return (
-        managedUserIds.includes(r.submittedBy) || r.submittedBy === user.id
-      );
+    if (user.role === "base") {
+      return r.submittedBy === user.id;
     }
-    return true; // State user sees all
+
+    // Get all users that report up to the current user, directly or indirectly
+    const getSubordinateIds = (managerId: string): string[] => {
+        const directReports = allUsers.filter(u => u.reportsTo === managerId);
+        let allSubordinates = directReports.map(u => u.id);
+        directReports.forEach(report => {
+            allSubordinates = [...allSubordinates, ...getSubordinateIds(report.id)];
+        });
+        return allSubordinates;
+    };
+    
+    const managedUserIds = getSubordinateIds(user.id);
+    
+    if (user.role === 'taluka') {
+        return managedUserIds.includes(r.submittedBy) || r.submittedBy === user.id;
+    }
+    if (user.role === 'district') {
+        return managedUserIds.includes(r.submittedBy) || r.submittedBy === user.id;
+    }
+    if (user.role === 'state') {
+        return true; // State user sees all
+    }
+
+    return false;
   });
   
   const visibleRequests = () => {
@@ -158,22 +185,12 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
               (r) => r.status === "Pending State Approval"
             );
           case "district":
-            const managedDistrictUserIds = allUsers
-              .filter((u) => u.reportsTo === user.id)
-              .map((u) => u.id);
             return allUserRequests.filter(
-              (r) =>
-                managedDistrictUserIds.includes(r.submittedBy) &&
-                r.status === "Pending District Approval"
+              (r) => r.status === "Pending District Approval"
             );
           case "taluka":
-            const managedTalukaUserIds = allUsers
-                .filter((u) => u.reportsTo === user.id)
-                .map((u) => u.id);
             return allUserRequests.filter(
-                (r) =>
-                managedTalukaUserIds.includes(r.submittedBy) &&
-                r.status === "Pending Taluka Approval"
+              (r) => r.status === "Pending Taluka Approval"
             );
           case "base":
             return allUserRequests.filter((r) => r.status.includes('Pending'));
