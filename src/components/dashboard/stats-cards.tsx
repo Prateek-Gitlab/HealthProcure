@@ -13,16 +13,30 @@ interface StatsCardsProps {
 }
 
 export function StatsCards({ requests, userRole, activeFilter, onFilterChange }: StatsCardsProps) {
+  
+  const getPendingRequests = () => {
+    switch(userRole) {
+      case 'state':
+        return requests.filter(r => r.status === 'Pending State Approval').length;
+      case 'district':
+        return requests.filter(r => r.status === 'Pending District Approval').length;
+      case 'taluka':
+        return requests.filter(r => r.status === 'Pending Taluka Approval').length;
+      case 'base':
+        return requests.filter(r => r.status.startsWith('Pending')).length;
+      default:
+        return 0;
+    }
+  }
+  
   const totalRequests = requests.length;
-  const pendingRequests = requests.filter(r => r.status.includes('Pending')).length;
+  const pendingRequests = getPendingRequests();
   const approvedRequests = requests.filter(r => r.status === 'Approved').length;
   const rejectedRequests = requests.filter(r => r.status === 'Rejected').length;
 
   const getPendingLabel = () => {
-    if (userRole === 'base') return 'Pending Approval';
-    if (userRole === 'district') return 'Pending Your Approval';
-    if (userRole === 'state') return 'Pending Your Approval';
-    return 'Pending';
+    if (userRole === 'base') return 'My Pending Requests';
+    return 'Pending Your Approval';
   }
 
   const cardStyle = (filter: FilterStatus) => cn(
@@ -52,20 +66,20 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
           </p>
         </CardContent>
       </Card>
-      {userRole !== 'base' && (
-        <Card className={cardStyle('pending')} onClick={() => onFilterChange('pending')}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{getPendingLabel()}</CardTitle>
-            <FileClock className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingRequests}</div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting action
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      
+      <Card className={cardStyle('pending')} onClick={() => onFilterChange('pending')}>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">{getPendingLabel()}</CardTitle>
+          <FileClock className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{pendingRequests}</div>
+          <p className="text-xs text-muted-foreground">
+            Awaiting action
+          </p>
+        </CardContent>
+      </Card>
+
       <Card className={cardStyle('Approved')} onClick={() => handleCardClick('Approved')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Approved</CardTitle>

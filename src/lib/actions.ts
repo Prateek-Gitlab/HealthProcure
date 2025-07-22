@@ -38,14 +38,16 @@ interface NewRequestData {
 export async function addRequest(
   requestData: NewRequestData,
   userId: string
-) {
+): Promise<ProcurementRequest | null> {
   if (!userId) {
-    throw new Error('User not authenticated');
+    console.error('Add request failed: User not authenticated');
+    return null;
   }
   const users = await getAllUsers();
   const user = users.find(u => u.id === userId);
   if (!user) {
-    throw new Error('User not found');
+    console.error(`Add request failed: User with ID ${userId} not found`);
+    return null;
   }
 
   const newRequest: Omit<ProcurementRequest, 'id'> = {
@@ -62,8 +64,14 @@ export async function addRequest(
     ],
   };
   
-  await addRow(newRequest);
-  revalidatePath('/dashboard');
+  try {
+    const addedRequest = await addRow(newRequest);
+    revalidatePath('/dashboard');
+    return addedRequest;
+  } catch (error) {
+    console.error('Failed to add request to sheet:', error);
+    return null;
+  }
 }
 
 export async function updateRequest(request: ProcurementRequest, userId: string) {

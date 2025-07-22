@@ -114,23 +114,19 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     
     setIsSubmitting(true);
     try {
-        const addedRequests = await Promise.all(
-            validRequests.map((req) =>
-                addRequest(req, user.id)
-            )
+        const addedRequestsPromises = validRequests.map((req) =>
+            addRequest(req, user.id)
         );
+        const addedRequests = await Promise.all(addedRequestsPromises);
+
+        // Filter out any nulls in case the action returns nothing on error
+        const successfulRequests = addedRequests.filter(r => r) as ProcurementRequest[];
         
-        // This part is tricky because addRequest returns void.
-        // For a full refresh, we would need to refetch.
-        // A simpler client-side update for now:
-        // This assumes the server action is successful and we can predict the new state.
-        // This is a temporary solution until we can get the created requests back.
-        // For now, let's just clear the staged requests and show a success message.
-        // The user will see the new requests on the next page load/refresh.
+        setRequests(currentRequests => [...currentRequests, ...successfulRequests]);
         
         toast({
             title: "Requests Submitted",
-            description: `${validRequests.length} requests have been successfully submitted. They will appear after a refresh.`,
+            description: `${successfulRequests.length} requests have been successfully submitted.`,
         });
 
         setStagedRequests([]);
@@ -166,7 +162,9 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         return managedUserIds.includes(r.submittedBy);
     }
     if (user.role === 'district') {
-        return managedUserIds.includes(r.submittedBy);
+        const subordinateTalukaIds = allUsers.filter(u => u.reportsTo === user.id && u.role === 'taluka').map(u => u.id);
+        const baseUserIds = allUsers.filter(u => u.role === 'base' && subordinateTalukaIds.includes(u.reportsTo || '')).map(u => u.id);
+        return r.status === 'Pending District Approval' && baseUserIds.includes(r.submittedBy);
     }
     if (user.role === 'state') {
         return true; // State user sees all
@@ -191,7 +189,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
               (r) => r.status === "Pending Taluka Approval"
             );
           case "base":
-            return allUserRequests.filter((r) => r.status.includes('Pending'));
+            return allUserRequests.filter((r) => r.status.startsWith('Pending'));
           default:
             return [];
         }
