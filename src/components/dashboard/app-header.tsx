@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, User as UserIcon, Syringe } from "lucide-react";
+import { LogOut, User as UserIcon, HeartPulse } from "lucide-react";
 
 export function AppHeader() {
   const { user, logout } = useAuth();
@@ -20,7 +20,7 @@ export function AppHeader() {
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-4 backdrop-blur md:px-6">
       <div className="flex items-center gap-3">
         <div className="bg-primary text-primary-foreground p-2 rounded-lg">
-            <Syringe className="w-5 h-5" />
+            <HeartPulse className="w-5 h-5" />
         </div>
         <h1 className="text-xl font-semibold font-headline">HealthProcure</h1>
       </div>

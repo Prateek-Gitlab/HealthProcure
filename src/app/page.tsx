@@ -2,7 +2,7 @@
 
 import { LoginForm } from "@/components/auth/login-form";
 import { getAllUsers } from '@/lib/data';
-import { Syringe } from "lucide-react";
+import { HeartPulse } from "lucide-react";
 
 export default async function LoginPage() {
   const users = await getAllUsers();
@@ -12,7 +12,7 @@ export default async function LoginPage() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
           <div className="bg-primary text-primary-foreground p-3 rounded-full mb-4">
-            <Syringe className="w-8 h-8" />
+            <HeartPulse className="w-8 h-8" />
           </div>
           <h1 className="text-3xl font-bold text-center font-headline">
             HealthProcure
