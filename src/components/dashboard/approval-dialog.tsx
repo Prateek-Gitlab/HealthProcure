@@ -43,13 +43,18 @@ export function ApprovalDialog({
   const handleConfirm = async () => {
     setIsSubmitting(true);
     let newStatus = request.status;
+    let actionMessage = "";
+
     if (action === "Reject") {
         newStatus = "Rejected";
+        actionMessage = `Rejected by ${user.role}`;
     } else {
         if (user.role === 'district') {
             newStatus = "Pending State Approval";
+            actionMessage = `Approved by District`;
         } else if (user.role === 'state') {
             newStatus = "Approved";
+            actionMessage = `Approved by State`;
         }
     }
     
@@ -59,7 +64,7 @@ export function ApprovalDialog({
         auditLog: [
             ...request.auditLog,
             {
-                action: action === "Approve" ? `Approved by ${user.role}` : `Rejected by ${user.role}`,
+                action: actionMessage,
                 user: user.name,
                 date: new Date().toISOString(),
                 comment: comment || undefined,

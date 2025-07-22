@@ -77,10 +77,10 @@ export function RequestDetailsSheet({
                         <h3 className="font-semibold mb-4">Audit Log</h3>
                         <div className="space-y-4">
                             {request.auditLog.map((log, index) => (
-                                <div key={index} className="flex gap-4 text-sm">
-                                    <div className="font-medium shrink-0 w-[160px]">{new Date(log.date).toLocaleString()}</div>
+                                <div key={index} className="flex items-start gap-4 text-sm">
+                                    <div className="font-medium shrink-0 whitespace-nowrap text-muted-foreground">{new Date(log.date).toLocaleString()}</div>
                                     <div className="flex flex-col">
-                                        <p><span className="font-semibold">{log.user}</span> {log.action.toLowerCase()} the request.</p>
+                                        <p><span className="font-semibold">{log.user}</span> {log.action.toLowerCase()}.</p>
                                         {log.comment && <p className="text-xs text-muted-foreground mt-1 italic">"{log.comment}"</p>}
                                     </div>
                                 </div>
