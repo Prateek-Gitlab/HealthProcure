@@ -34,7 +34,7 @@ interface StagedRequest {
   justification: string;
 }
 
-type FilterStatus = RequestStatus | 'all' | 'pending';
+type FilterStatus = RequestStatus | 'all' | 'pending' | 'approved-by-me';
 
 
 export function DashboardClient({ initialRequests }: DashboardClientProps) {
@@ -146,18 +146,6 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       return r.submittedBy === user.id;
     }
     
-    // For Taluka, District, State roles
-    const getSubordinateIds = (managerId: string): string[] => {
-      const directReports = allUsers.filter(u => u.reportsTo === managerId);
-      let allSubordinates = directReports.map(u => u.id);
-      directReports.forEach(report => {
-        allSubordinates = [...allSubordinates, ...getSubordinateIds(report.id)];
-      });
-      return allSubordinates;
-    };
-  
-    const managedUserIds = getSubordinateIds(user.id);
-  
     if (user.role === 'taluka') {
       const baseUserIds = allUsers.filter(u => u.role === 'base' && u.reportsTo === user.id).map(u => u.id);
       return baseUserIds.includes(r.submittedBy);
@@ -170,7 +158,6 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     }
   
     if (user.role === 'state') {
-      // State user sees all requests
       return true;
     }
   
@@ -198,6 +185,16 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
             return [];
         }
     }
+    if (filterStatus === 'approved-by-me') {
+       if (user.role === 'taluka') {
+          return allUserRequests.filter(r => r.status !== 'Pending Taluka Approval' && r.status !== 'Rejected');
+        }
+        if (user.role === 'district') {
+          return allUserRequests.filter(r => r.status === 'Pending State Approval' || r.status === 'Approved');
+        }
+        // For state and base users, this is just final approved
+        return allUserRequests.filter(r => r.status === 'Approved');
+    }
     if (filterStatus === 'all') {
         return allUserRequests;
     }
@@ -209,8 +206,9 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         case 'pending':
             if (user.role === 'base') return "My Pending Requests";
             return `${user.role.charAt(0).toUpperCase() + user.role.slice(1)}-Level Approval Queue`;
-        case 'Approved':
-            return 'Approved Requests';
+        case 'approved-by-me':
+             if (user.role === 'base') return "Final Approved Requests";
+            return 'Requests Approved by You';
         case 'Rejected':
             return 'Rejected Requests';
         case 'all':
