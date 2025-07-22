@@ -10,6 +10,10 @@ interface RequestStatusStepperProps {
 const steps = [
   { name: "Submitted", statuses: [] as RequestStatus[] },
   {
+    name: "Taluka Approval",
+    statuses: ["Pending Taluka Approval", "Pending District Approval", "Pending State Approval", "Approved"],
+  },
+  {
     name: "District Approval",
     statuses: ["Pending District Approval", "Pending State Approval", "Approved"],
   },
@@ -23,24 +27,25 @@ export function RequestStatusStepper({
 }: RequestStatusStepperProps) {
   const getStepStatus = (stepName: string) => {
     if (currentStatus === "Rejected") {
-      if (stepName === "Submitted") return "completed";
-      if (
-        stepName === "District Approval" ||
-        stepName === "State Approval"
-      ) {
-        const lastCompletedStepBeforeRejection =
-          auditLog
-            .filter((l) => l.action === "Approved")
-            .pop()?.user.includes("District")
-            ? "District Approval"
-            : "Submitted";
+        const rejectionAudit = auditLog.find(l => l.action === 'rejected');
+        const lastCompletedStepName = rejectionAudit ? steps[steps.findIndex(s => s.name.toLowerCase().includes(rejectionAudit.user.split(" ")[0].toLowerCase()))-1]?.name : "Submitted";
+        
         const currentStepIndex = steps.findIndex((s) => s.name === stepName);
-        const lastCompletedIndex = steps.findIndex(
-          (s) => s.name === lastCompletedStepBeforeRejection
-        );
-        if (currentStepIndex <= lastCompletedIndex) return "completed";
-        return "rejected";
-      }
+        const lastCompletedIndex = steps.findIndex((s) => s.name === lastCompletedStepName);
+        
+        if (stepName === "Submitted") return "completed";
+        
+        const rejectionStepIndex = auditLog.findIndex(l => l.action === 'rejected');
+        const rejectionUserRole = auditLog[rejectionStepIndex]?.user;
+
+        let rejectedAtIndex = -1;
+        if (rejectionUserRole?.toLowerCase().includes('taluka')) rejectedAtIndex = 1;
+        else if (rejectionUserRole?.toLowerCase().includes('district')) rejectedAtIndex = 2;
+        else if (rejectionUserRole?.toLowerCase().includes('state')) rejectedAtIndex = 3;
+
+        if (currentStepIndex < rejectedAtIndex) return "completed";
+        if (currentStepIndex === rejectedAtIndex) return "rejected";
+        return "upcoming";
     }
 
     if (stepName === "Submitted") return "completed";
@@ -51,7 +56,7 @@ export function RequestStatusStepper({
     const step = steps.find((s) => s.name === stepName);
     if (!step) return "upcoming";
 
-    if (currentStatus.includes(step.name)) return "current";
+    if (currentStatus.replace(/ /g, '').includes(step.name.replace(/ /g, ''))) return "current";
     if (step.statuses.includes(currentStatus)) return "completed";
 
     return "upcoming";
@@ -95,21 +100,18 @@ export function RequestStatusStepper({
     // The first step "Submitted" is always considered completed as a baseline
     if (currentStepIndex === 0) return true;
 
-    // For rejection cases
     if (currentStatus === "Rejected") {
-        const lastApprovedLog = auditLog.filter(l => l.action === 'Approved').pop();
-        if (!lastApprovedLog) return false;
-        
-        if (lastApprovedLog.user.includes('District')) {
-             return currentStepIndex <= 1;
-        }
-        if (lastApprovedLog.user.includes('State')) {
-            return currentStepIndex <=2;
-        }
-        return false;
+        const rejectionAudit = auditLog.find(l => l.action === 'rejected');
+        if(!rejectionAudit) return false;
+
+        let rejectionLevel = -1;
+        if(rejectionAudit.user.toLowerCase().includes('taluka')) rejectionLevel = 1;
+        if(rejectionAudit.user.toLowerCase().includes('district')) rejectionLevel = 2;
+        if(rejectionAudit.user.toLowerCase().includes('state')) rejectionLevel = 3;
+
+        return currentStepIndex < rejectionLevel;
     }
     
-    // For normal flow
     const requiredStatusForCompletion = steps[currentStepIndex-1].statuses[0];
     if(!requiredStatusForCompletion) return true;
 

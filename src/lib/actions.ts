@@ -11,7 +11,8 @@ export async function login(userId: string) {
   const users = await getAllUsers();
   const user = users.find(u => u.id === userId);
   if (user) {
-    cookies().set('health_procure_user_id', userId, {
+    const cookieStore = cookies();
+    cookieStore.set('health_procure_user_id', userId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -23,7 +24,8 @@ export async function login(userId: string) {
 }
 
 export async function logout() {
-  cookies().delete('health_procure_user_id');
+  const cookieStore = cookies();
+  cookieStore.delete('health_procure_user_id');
 }
 
 interface NewRequestData {
@@ -49,7 +51,7 @@ export async function addRequest(
   const newRequest: Omit<ProcurementRequest, 'id'> = {
     ...requestData,
     submittedBy: user.id,
-    status: 'Pending District Approval',
+    status: 'Pending Taluka Approval',
     createdAt: new Date().toISOString(),
     auditLog: [
       {

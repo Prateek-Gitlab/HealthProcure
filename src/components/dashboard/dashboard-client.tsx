@@ -130,7 +130,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   
   const allUserRequests = initialRequests.filter((r) => {
     if (user.role === "base") return r.submittedBy === user.id;
-    if (user.role === "district") {
+    if (user.role === 'taluka' || user.role === "district") {
       const managedUserIds = allUsers
         .filter((u) => u.reportsTo === user.id)
         .map((u) => u.id);
@@ -149,13 +149,22 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
               (r) => r.status === "Pending State Approval"
             );
           case "district":
-            const managedUserIds = allUsers
+            const managedDistrictUserIds = allUsers
               .filter((u) => u.reportsTo === user.id)
               .map((u) => u.id);
             return allUserRequests.filter(
               (r) =>
-                managedUserIds.includes(r.submittedBy) &&
+                managedDistrictUserIds.includes(r.submittedBy) &&
                 r.status === "Pending District Approval"
+            );
+          case "taluka":
+            const managedTalukaUserIds = allUsers
+                .filter((u) => u.reportsTo === user.id)
+                .map((u) => u.id);
+            return allUserRequests.filter(
+                (r) =>
+                managedTalukaUserIds.includes(r.submittedBy) &&
+                r.status === "Pending Taluka Approval"
             );
           case "base":
             return allUserRequests.filter((r) => r.status.includes('Pending'));

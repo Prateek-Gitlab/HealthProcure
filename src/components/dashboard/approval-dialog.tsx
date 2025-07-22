@@ -47,14 +47,15 @@ export function ApprovalDialog({
 
     if (action === "Reject") {
         newStatus = "Rejected";
-        actionMessage = `Rejected by ${user.role}`;
+        actionMessage = "rejected";
     } else {
-        if (user.role === 'district') {
+        actionMessage = "approved";
+        if (user.role === 'taluka') {
+            newStatus = "Pending District Approval";
+        } else if (user.role === 'district') {
             newStatus = "Pending State Approval";
-            actionMessage = `Approved by District`;
         } else if (user.role === 'state') {
             newStatus = "Approved";
-            actionMessage = `Approved by State`;
         }
     }
     

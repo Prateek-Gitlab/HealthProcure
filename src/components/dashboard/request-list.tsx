@@ -64,6 +64,7 @@ export function RequestList({ requests, isFiltered = false }: RequestListProps) 
   
   const canApproveOrReject = (request: ProcurementRequest) => {
     if (!user || user.role === 'base') return false;
+    if (user.role === 'taluka' && request.status === 'Pending Taluka Approval') return true;
     if (user.role === 'district' && request.status === 'Pending District Approval') return true;
     if (user.role === 'state' && request.status === 'Pending State Approval') return true;
     return false;
@@ -75,6 +76,7 @@ export function RequestList({ requests, isFiltered = false }: RequestListProps) 
         return "default";
       case "Rejected":
         return "destructive";
+      case "Pending Taluka Approval":
       case "Pending District Approval":
       case "Pending State Approval":
         return "secondary";
@@ -151,7 +153,7 @@ export function RequestList({ requests, isFiltered = false }: RequestListProps) 
     const groupedRequests = requests.reduce((acc, request) => {
       const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
       // Group by the facility that reports to the current user, or the user's own requests
-      const facilityId = submittedByUser?.role === 'base' ? submittedByUser.id : user?.id || 'unknown';
+      const facilityId = (submittedByUser?.role === 'base' || submittedByUser?.role === 'taluka') ? submittedByUser.id : user?.id || 'unknown';
       const facilityUser = allUsers.find(u => u.id === facilityId);
       const facilityName = facilityUser?.name || 'My Requests';
 
@@ -187,7 +189,7 @@ export function RequestList({ requests, isFiltered = false }: RequestListProps) 
 
   return (
     <>
-      {user && (user.role === 'district' || user.role === 'state') ? (
+      {user && (user.role === 'district' || user.role === 'state' || user.role === 'taluka') ? (
         renderGroupedView()
       ) : (
         <Card>

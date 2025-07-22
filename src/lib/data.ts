@@ -1,6 +1,6 @@
 import { getRequests, getUsers } from "./sheets";
 
-export type Role = 'base' | 'district' | 'state';
+export type Role = 'base' | 'taluka' | 'district' | 'state';
 
 export interface User {
   id: string;
@@ -17,6 +17,7 @@ export interface AuditLogEntry {
 }
 
 export type RequestStatus =
+  | 'Pending Taluka Approval'
   | 'Pending District Approval'
   | 'Pending State Approval'
   | 'Approved'

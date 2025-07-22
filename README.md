@@ -18,7 +18,7 @@ GOOGLE_SHEETS_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour-Private-Key\n-----E
 2.  **Set up Sheets and Service Account:**
     *   In your Google Sheet, create two tabs (sheets): one named `ProcurementRequests` and another named `Users`.
     *   Set the headers for `ProcurementRequests`: `id`, `category`, `itemName`, `quantity`, `justification`, `submittedBy`, `status`, `createdAt`, `auditLog`.
-    *   Set the headers for `Users`: `id`, `name`, `role`, `reportsTo`.
+    *   Set the headers for `Users`: `id`, `name`, `role`, `reportsTo`. The `role` can be one of: `state`, `district`, `taluka`, `base`. The `reportsTo` field should contain the `id` of the user's manager.
     *   Go to the [Google Cloud Console](https://console.cloud.google.com/).
     *   Create a new project or select an existing one.
     *   Enable the **Google Sheets API** for your project.
