@@ -7,7 +7,6 @@
 - Approval Workflow: Approval/rejection interface for District and State Level users, with option to add comments or request revisions.
 - Real-Time Status Tracking: Real-time tracking of request status with clear milestones for all users.
 - Audit Log: System for audit trails of approvals, rejections, and modifications at each level.
-- Demand Forecasting: AI-driven analysis tool to forecast potential demand based on historical data and current requests. LLM uses data to determine potential future shortages or overages of inventory. tool
 - Data Storage: The data should be stored in Google sheets.
 
 ## Style Guidelines:

@@ -78,7 +78,7 @@ export function RequestDetailsSheet({
                         <div className="space-y-4">
                             {request.auditLog.map((log, index) => (
                                 <div key={index} className="flex gap-4 text-sm">
-                                    <div className="font-medium min-w-[100px]">{new Date(log.date).toLocaleString()}</div>
+                                    <div className="font-medium shrink-0 w-[160px]">{new Date(log.date).toLocaleString()}</div>
                                     <div className="flex flex-col">
                                         <p><span className="font-semibold">{log.user}</span> {log.action.toLowerCase()} the request.</p>
                                         {log.comment && <p className="text-xs text-muted-foreground mt-1 italic">"{log.comment}"</p>}
