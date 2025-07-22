@@ -1,7 +1,7 @@
 import type { ProcurementRequest, Role, RequestStatus } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { FileClock, CheckCircle2, XCircle, ListTodo } from "lucide-react";
+import { FileClock, CheckCircle2, XCircle, ListTodo, ArrowUpCircle } from "lucide-react";
 
 type FilterStatus = RequestStatus | 'all' | 'pending';
 
@@ -31,15 +31,20 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   
   const totalRequests = requests.length;
   const pendingRequests = getPendingRequests();
-  const approvedRequests = requests.filter(r => r.status === 'Approved').length;
+  const finalApprovedRequests = requests.filter(r => r.status === 'Approved').length;
   const rejectedRequests = requests.filter(r => r.status === 'Rejected').length;
+  
+  const forwardedRequests = requests.filter(r => 
+    (userRole === 'taluka' && (r.status === 'Pending District Approval' || r.status === 'Pending State Approval')) ||
+    (userRole === 'district' && r.status === 'Pending State Approval')
+  ).length;
 
   const getPendingLabel = () => {
     if (userRole === 'base') return 'My Pending Requests';
     return 'Pending Your Approval';
   }
 
-  const cardStyle = (filter: FilterStatus) => cn(
+  const cardStyle = (filter: FilterStatus | 'forwarded') => cn(
     "transition-all cursor-pointer hover:border-primary/50",
     activeFilter === filter && "border-primary ring-2 ring-primary",
   );
@@ -48,8 +53,10 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
     onFilterChange(filter);
   }
 
-  const gridClass = userRole === 'base' 
-    ? "grid gap-4 md:grid-cols-3" 
+  const isApprover = userRole !== 'base';
+
+  const gridClass = isApprover
+    ? "grid gap-4 md:grid-cols-2 lg:grid-cols-5"
     : "grid gap-4 md:grid-cols-2 lg:grid-cols-4";
 
   return (
@@ -80,13 +87,28 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
         </CardContent>
       </Card>
 
+      {isApprover && (
+        <Card className={cn("transition-all", activeFilter === 'all' ? "opacity-100" : "opacity-60")}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Forwarded for Approval</CardTitle>
+                <ArrowUpCircle className="h-4 w-4 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{forwardedRequests}</div>
+                <p className="text-xs text-muted-foreground">
+                    Sent to the next level
+                </p>
+            </CardContent>
+        </Card>
+      )}
+
       <Card className={cardStyle('Approved')} onClick={() => handleCardClick('Approved')}>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Approved</CardTitle>
+          <CardTitle className="text-sm font-medium">Final Approved</CardTitle>
           <CheckCircle2 className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{approvedRequests}</div>
+          <div className="text-2xl font-bold">{finalApprovedRequests}</div>
           <p className="text-xs text-muted-foreground">
             Successfully processed
           </p>
