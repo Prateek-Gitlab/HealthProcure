@@ -126,7 +126,7 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
-          <div className="w-full max-w-4xl mx-auto">
+          <div className="w-full max-w-4xl">
             <ResponsiveContainer width="100%" height={350}>
               <BarChart data={chartData}>
                 <XAxis
