@@ -14,24 +14,28 @@ export function RequestStatusStepper({
 }: RequestStatusStepperProps) {
 
   const finalStepName = currentStatus === "Approved" ? "Request Approved" : "Request Rejected";
+  
   const steps = [
     { name: "Submitted", statuses: [] as RequestStatus[] },
     {
       name: "Taluka Approval",
       statuses: ["Pending Taluka Approval", "Approved"],
     },
-    { name: finalStepName, statuses: ["Approved"] },
+    { name: finalStepName, statuses: currentStatus === "Rejected" ? ["Rejected"] : ["Approved"] },
   ];
 
   const getStepStatus = (stepName: string) => {
     if (currentStatus === "Rejected") {
-        if (stepName === "Submitted") return "completed";
-        if (stepName === "Taluka Approval") {
-            const talukaRejection = auditLog.find(l => l.action === 'rejected' && l.user.toLowerCase().includes('taluka'));
-            return talukaRejection ? "rejected" : "completed";
-        }
-        if(stepName === "Request Rejected") return "rejected";
-        return "upcoming";
+      if (stepName === "Submitted") return "completed";
+      
+      const talukaRejection = auditLog.find(l => l.action.toLowerCase() === 'rejected');
+
+      if (stepName === "Taluka Approval") {
+          return talukaRejection ? "rejected" : "completed";
+      }
+
+      if(stepName === "Request Rejected") return "rejected";
+      return "upcoming";
     }
 
     if (stepName === "Submitted") return "completed";
@@ -44,6 +48,14 @@ export function RequestStatusStepper({
 
     if (currentStatus.replace(/ /g, '').includes(step.name.replace(/ /g, ''))) return "current";
     if (step.statuses.includes(currentStatus)) return "completed";
+    
+    // Check if a future step is the current one.
+    const currentStepIndex = steps.findIndex(s => getStepStatus(s.name) === 'current');
+    const thisStepIndex = steps.findIndex(s => s.name === stepName);
+
+    if (currentStepIndex !== -1 && thisStepIndex < currentStepIndex) {
+        return "completed";
+    }
 
     return "upcoming";
   };
@@ -76,26 +88,17 @@ export function RequestStatusStepper({
     return "bg-secondary text-secondary-foreground";
   };
 
-  const isStepCompleted = (stepName: string) => {
-    const currentStepIndex = steps.findIndex((s) => s.name === stepName);
-    if (currentStepIndex === -1) return false;
-    if (currentStepIndex === 0) return true;
+  const isConnectorCompleted = (stepIndex: number) => {
+    if (stepIndex >= steps.length - 1) return false;
 
-    if (currentStatus === "Rejected") {
-        const rejectionAudit = auditLog.find(l => l.action === 'rejected');
-        if(!rejectionAudit) return false;
-        if(rejectionAudit.user.toLowerCase().includes('taluka')) return currentStepIndex < 1;
-        return false;
+    const nextStepName = steps[stepIndex + 1].name;
+    const nextStepStatus = getStepStatus(nextStepName);
+
+    if(currentStatus === 'Rejected') {
+        return getStepStatus(steps[stepIndex].name) === 'completed' && nextStepStatus !== 'upcoming';
     }
-    
-    const requiredStatusForCompletion = steps[currentStepIndex-1].statuses[0];
-    if(!requiredStatusForCompletion) return true;
 
-    const allStatuses = steps.flatMap(s => s.statuses);
-    const currentStatusIndex = allStatuses.indexOf(currentStatus);
-    const requiredStatusIndex = allStatuses.indexOf(requiredStatusForCompletion);
-
-    return currentStatusIndex >= requiredStatusIndex;
+    return nextStepStatus === 'completed' || nextStepStatus === 'current';
   };
 
   return (
@@ -106,12 +109,16 @@ export function RequestStatusStepper({
             key={step.name}
             className={cn("relative", stepIdx === steps.length - 1 ? "flex-shrink-0" : "flex-1")}
           >
-              {currentStatus !== 'Rejected' && stepIdx < steps.length - 1 ? (
+              {stepIdx < steps.length - 1 ? (
                 <div
-                  className="absolute left-4 top-4 -ml-px mt-px h-0.5 w-full"
+                  className={cn(
+                    "absolute left-4 top-4 -ml-px mt-px h-0.5 w-full",
+                     // Hide line for rejected requests unless it's the first connector
+                    (currentStatus === 'Rejected' && stepIdx > 0) ? 'hidden' : ''
+                  )}
                   aria-hidden="true"
                 >
-                  <div className={cn("h-full w-full", isStepCompleted(steps[stepIdx+1].name) ? 'bg-primary' : 'bg-border')} />
+                  <div className={cn("h-full w-full", isConnectorCompleted(stepIdx) ? 'bg-primary' : 'bg-border')} />
                 </div>
               ) : null}
               <div className="relative flex flex-col items-center gap-2">
