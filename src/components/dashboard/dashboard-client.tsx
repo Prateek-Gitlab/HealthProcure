@@ -9,6 +9,7 @@ import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RequestList } from "@/components/dashboard/request-list";
 import { RequestForm } from "@/components/dashboard/request-form";
 import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
+import { PlaceholderChart } from "@/components/dashboard/placeholder-chart";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Send, XCircle, Loader2 } from "lucide-react";
 import {
@@ -244,7 +245,12 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       />
 
       {(user.role === 'district' || user.role === 'state') && (
-        <AnalyticsChart requests={requests} allUsers={allUsers} currentUser={user} />
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <div className="xl:col-span-2">
+                <AnalyticsChart requests={requests} allUsers={allUsers} currentUser={user} />
+            </div>
+            <PlaceholderChart />
+        </div>
       )}
 
       {user.role === "base" && (
