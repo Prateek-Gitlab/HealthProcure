@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ProcurementRequest, Priority } from "@/lib/data";
+import type { ProcurementRequest, Priority, User } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import {
   Table,
@@ -167,23 +167,62 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
     );
   }
 
+  const getGroupedView = () => {
+    return requests.reduce((acc, request) => {
+      const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
+      if (!submittedByUser) {
+        return acc;
+      }
+  
+      let groupName = 'My Requests';
+      if (user?.role === 'district' || user?.role === 'state') {
+        const talukaUser = allUsers.find(u => u.id === submittedByUser.reportsTo && u.role === 'taluka');
+        if (talukaUser) {
+          groupName = `Pending with ${talukaUser.name}`;
+        } else if (submittedByUser.role !== 'base') {
+          groupName = submittedByUser.name; // Group by taluka/district directly if they submitted
+        }
+      } else if (user?.role === 'taluka') {
+        groupName = submittedByUser.name; // Taluka user sees groups by base user
+      }
+  
+      if (!acc[groupName]) {
+        acc[groupName] = [];
+      }
+      acc[groupName].push(request);
+      return acc;
+    }, {} as Record<string, ProcurementRequest[]>);
+  };
+  
   const renderGroupedView = () => {
     const groupedRequests = requests.reduce((acc, request) => {
       const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
-      // Group by the facility that reports to the current user, or the user's own requests
-      const facilityId = (submittedByUser?.role === 'base' || submittedByUser?.role === 'taluka') ? submittedByUser.id : user?.id || 'unknown';
-      const facilityUser = allUsers.find(u => u.id === facilityId);
-      const facilityName = facilityUser?.name || 'My Requests';
-
+  
+      let facilityName = 'My Requests';
+      let facilityUser: User | undefined;
+  
+      if (user?.role === 'district' || user?.role === 'state') {
+        if (request.status === 'Pending Taluka Approval' && submittedByUser?.role === 'base') {
+          facilityUser = allUsers.find(u => u.id === submittedByUser.reportsTo);
+          facilityName = facilityUser?.name || 'Unknown Taluka';
+        } else if (submittedByUser) {
+          facilityUser = allUsers.find(u => u.id === submittedByUser.reportsTo);
+          facilityName = allUsers.find(u => u.id === submittedByUser.id)?.name || 'Unknown';
+        }
+      } else {
+        facilityUser = submittedByUser;
+        facilityName = facilityUser?.name || 'My Requests';
+      }
+      
       if (!acc[facilityName]) {
         acc[facilityName] = [];
       }
       acc[facilityName].push(request);
       return acc;
     }, {} as Record<string, ProcurementRequest[]>);
-
+  
     const facilityNames = Object.keys(groupedRequests).sort();
-
+  
     return (
       <Accordion type="multiple" className="w-full space-y-4">
         {facilityNames.map(facilityName => (
