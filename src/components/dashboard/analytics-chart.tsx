@@ -126,30 +126,32 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
       </CardHeader>
       <CardContent>
         {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={chartData}>
-              <XAxis
-                dataKey="name"
-                stroke="#888888"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="#888888"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) => `₹${Number(value).toLocaleString()}`}
-              />
-              <Tooltip 
-                formatter={(value) => [`₹${Number(value).toLocaleString()}`, 'Total Cost']}
-                cursor={{ fill: 'hsl(var(--secondary))' }}
-              />
-              <Legend />
-              <Bar dataKey="totalCost" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Total Cost" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="w-full max-w-4xl mx-auto">
+            <ResponsiveContainer width="100%" height={350}>
+              <BarChart data={chartData}>
+                <XAxis
+                  dataKey="name"
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="#888888"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => `₹${Number(value).toLocaleString()}`}
+                />
+                <Tooltip 
+                  formatter={(value) => [`₹${Number(value).toLocaleString()}`, 'Total Cost']}
+                  cursor={{ fill: 'hsl(var(--secondary))' }}
+                />
+                <Legend />
+                <Bar dataKey="totalCost" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Total Cost" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         ) : (
           <div className="flex items-center justify-center h-[350px]">
             <p className="text-muted-foreground">No approved requests match the selected filters.</p>
