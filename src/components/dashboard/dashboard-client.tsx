@@ -8,6 +8,7 @@ import { addRequest } from "@/lib/actions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RequestList } from "@/components/dashboard/request-list";
 import { RequestForm } from "@/components/dashboard/request-form";
+import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
 import { Button } from "@/components/ui/button";
 import { PlusCircle, Send, XCircle, Loader2 } from "lucide-react";
 import {
@@ -241,6 +242,10 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         activeFilter={filterStatus}
         onFilterChange={setFilterStatus}
       />
+
+      {(user.role === 'district' || user.role === 'state') && (
+        <AnalyticsChart requests={requests} allUsers={allUsers} currentUser={user} />
+      )}
 
       {user.role === "base" && (
         <>
