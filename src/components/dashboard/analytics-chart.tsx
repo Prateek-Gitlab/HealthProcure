@@ -136,4 +136,3 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
     </Card>
   );
 }
-
