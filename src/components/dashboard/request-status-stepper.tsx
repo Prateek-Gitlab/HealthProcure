@@ -11,13 +11,8 @@ const steps = [
   { name: "Submitted", statuses: [] as RequestStatus[] },
   {
     name: "Taluka Approval",
-    statuses: ["Pending Taluka Approval", "Pending District Approval", "Pending State Approval", "Approved"],
+    statuses: ["Pending Taluka Approval", "Approved"],
   },
-  {
-    name: "District Approval",
-    statuses: ["Pending District Approval", "Pending State Approval", "Approved"],
-  },
-  { name: "State Approval", statuses: ["Pending State Approval", "Approved"] },
   { name: "Fulfilled", statuses: ["Approved"] },
 ];
 
@@ -40,8 +35,6 @@ export function RequestStatusStepper({
 
         let rejectedAtIndex = -1;
         if (rejectionUserRole?.toLowerCase().includes('taluka')) rejectedAtIndex = 1;
-        else if (rejectionUserRole?.toLowerCase().includes('district')) rejectedAtIndex = 2;
-        else if (rejectionUserRole?.toLowerCase().includes('state')) rejectedAtIndex = 3;
 
         if (currentStepIndex < rejectedAtIndex) return "completed";
         if (currentStepIndex === rejectedAtIndex) return "rejected";
@@ -106,8 +99,6 @@ export function RequestStatusStepper({
 
         let rejectionLevel = -1;
         if(rejectionAudit.user.toLowerCase().includes('taluka')) rejectionLevel = 1;
-        if(rejectionAudit.user.toLowerCase().includes('district')) rejectionLevel = 2;
-        if(rejectionAudit.user.toLowerCase().includes('state')) rejectionLevel = 3;
 
         return currentStepIndex < rejectionLevel;
     }

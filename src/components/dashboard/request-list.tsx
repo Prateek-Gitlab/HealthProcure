@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -57,10 +58,8 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
   };
   
   const canApproveOrReject = (request: ProcurementRequest) => {
-    if (!user || user.role === 'base') return false;
+    if (!user || user.role === 'base' || user.role === 'district' || user.role === 'state') return false;
     if (user.role === 'taluka' && request.status === 'Pending Taluka Approval') return true;
-    if (user.role === 'district' && request.status === 'Pending District Approval') return true;
-    if (user.role === 'state' && request.status === 'Pending State Approval') return true;
     return false;
   }
 
@@ -71,8 +70,6 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
       case "Rejected":
         return "destructive";
       case "Pending Taluka Approval":
-      case "Pending District Approval":
-      case "Pending State Approval":
         return "secondary";
       default:
         return "outline";

@@ -52,10 +52,6 @@ export function ApprovalDialog({
     } else {
         actionMessage = "approved";
         if (user.role === 'taluka') {
-            newStatus = "Pending District Approval";
-        } else if (user.role === 'district') {
-            newStatus = "Pending State Approval";
-        } else if (user.role === 'state') {
             newStatus = "Approved";
         }
     }

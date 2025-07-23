@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -154,22 +155,11 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     }
   
     if (user.role === 'district') {
-      if (r.status === 'Rejected') {
-         // A taluka user must have rejected this. Don't show it to the district user.
-         const audit = r.auditLog.find(a => a.action === 'rejected');
-         // We can be more specific and check if a taluka user in their hierarchy rejected it.
-         // For now, any rejection hides it from district view.
-         if (audit) return false;
-      }
       const subordinateTalukaIds = allUsers.filter(u => u.reportsTo === user.id && u.role === 'taluka').map(u => u.id);
       return subordinateTalukaIds.includes(submittedByUser.reportsTo || '');
     }
   
     if (user.role === 'state') {
-       if (r.status === 'Rejected') {
-         // A lower-level user must have rejected this. Don't show it to the state user.
-         return false;
-      }
       return true;
     }
   
@@ -180,13 +170,8 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     if (filterStatus === 'pending') {
         switch (user.role) {
           case "state":
-            return allUserRequests.filter(
-              (r) => r.status === "Pending State Approval"
-            );
           case "district":
-            return allUserRequests.filter(
-              (r) => r.status === "Pending District Approval"
-            );
+            return []; // No pending actions for them
           case "taluka":
             return allUserRequests.filter(
               (r) => r.status === "Pending Taluka Approval"
@@ -199,10 +184,10 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     }
     if (filterStatus === 'approved-by-me') {
        if (user.role === 'taluka') {
-          return allUserRequests.filter(r => r.status !== 'Pending Taluka Approval' && r.status !== 'Rejected');
+          return allUserRequests.filter(r => r.status === 'Approved');
         }
         if (user.role === 'district') {
-          return allUserRequests.filter(r => r.status === 'Pending State Approval' || r.status === 'Approved');
+          return allUserRequests.filter(r => r.status === 'Approved');
         }
         // For state and base users, this is just final approved
         return allUserRequests.filter(r => r.status === 'Approved');
@@ -217,10 +202,9 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     switch (filterStatus) {
         case 'pending':
             if (user.role === 'base') return "My Pending Requests";
-            return `${user.role.charAt(0).toUpperCase() + user.role.slice(1)}-Level Approval Queue`;
+            return `Approval Queue`;
         case 'approved-by-me':
-             if (user.role === 'base') return "Final Approved Requests";
-            return 'Requests Approved by You';
+            return 'Approved Requests';
         case 'Rejected':
             return 'Rejected Requests';
         case 'all':

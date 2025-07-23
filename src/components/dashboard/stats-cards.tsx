@@ -17,9 +17,8 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   const getPendingRequests = () => {
     switch(userRole) {
       case 'state':
-        return requests.filter(r => r.status === 'Pending State Approval').length;
       case 'district':
-        return requests.filter(r => r.status === 'Pending District Approval').length;
+        return 0; // No pending actions for them
       case 'taluka':
         return requests.filter(r => r.status === 'Pending Taluka Approval').length;
       case 'base':
@@ -30,14 +29,10 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   }
 
   const getApprovedByMeCount = () => {
-    if (userRole === 'taluka') {
-      return requests.filter(r => r.status !== 'Pending Taluka Approval' && r.status !== 'Rejected').length;
+    if (userRole === 'taluka' || userRole === 'district' || userRole === 'state' || userRole === 'base') {
+      return requests.filter(r => r.status === 'Approved').length;
     }
-    if (userRole === 'district') {
-      return requests.filter(r => r.status === 'Pending State Approval' || r.status === 'Approved').length;
-    }
-    // For state and base users, this is just final approved
-    return requests.filter(r => r.status === 'Approved').length;
+    return 0;
   }
   
   const totalRequests = requests.length;
@@ -47,12 +42,12 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
 
   const getPendingLabel = () => {
     if (userRole === 'base') return 'My Pending Requests';
-    return 'Pending Your Approval';
+    if (userRole === 'taluka') return 'Pending Your Approval';
+    return 'Pending Approval';
   }
 
   const getApprovedLabel = () => {
-    if (userRole === 'base') return 'Final Approved';
-    return 'Approved by You';
+    return 'Approved';
   }
 
   const cardStyle = (filter: FilterStatus) => cn(
@@ -61,6 +56,9 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   );
   
   const handleCardClick = (filter: FilterStatus) => {
+    if (userRole !== 'taluka' && userRole !== 'base' && filter === 'pending') {
+      return; // Prevent clicking pending for district/state
+    }
     onFilterChange(filter);
   }
 
@@ -81,7 +79,11 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
         </CardContent>
       </Card>
       
-      <Card className={cardStyle('pending')} onClick={() => onFilterChange('pending')}>
+      <Card 
+        className={cardStyle('pending')} 
+        onClick={() => handleCardClick('pending')}
+        style={{ opacity: (userRole === 'district' || userRole === 'state') ? 0.5 : 1, cursor: (userRole === 'district' || userRole === 'state') ? 'not-allowed' : 'pointer' }}
+      >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{getPendingLabel()}</CardTitle>
           <FileClock className="h-4 w-4 text-muted-foreground" />
@@ -102,7 +104,7 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
         <CardContent>
           <div className="text-2xl font-bold">{approvedByMeRequests}</div>
           <p className="text-xs text-muted-foreground">
-            {userRole === 'base' ? 'Successfully processed' : 'Forwarded or completed'}
+            Completed requests
           </p>
         </CardContent>
       </Card>

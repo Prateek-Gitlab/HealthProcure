@@ -18,8 +18,6 @@ export interface AuditLogEntry {
 
 export type RequestStatus =
   | 'Pending Taluka Approval'
-  | 'Pending District Approval'
-  | 'Pending State Approval'
   | 'Approved'
   | 'Rejected';
 
