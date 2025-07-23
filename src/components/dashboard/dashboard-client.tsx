@@ -186,7 +186,9 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         switch (user.role) {
           case "state":
           case "district":
-            return []; // No pending actions for them
+            return allUserRequests.filter(
+              (r) => r.status === "Pending Taluka Approval"
+            );
           case "taluka":
             return allUserRequests.filter(
               (r) => r.status === "Pending Taluka Approval"
