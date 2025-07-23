@@ -100,7 +100,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
           <TableHead className="text-right">Quantity</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Priority</TableHead>
-          {user && user.role !== 'base' && <TableHead className="text-right">Total Cost (₹)</TableHead>}
+          <TableHead className="text-right">Total Cost (₹)</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -123,11 +123,9 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
                       {request.priority}
                   </Badge>
               </TableCell>
-              {user && user.role !== 'base' && (
-                <TableCell className="text-right font-medium">
-                  {totalCost.toLocaleString('en-IN')}
-                </TableCell>
-              )}
+              <TableCell className="text-right font-medium">
+                {totalCost.toLocaleString('en-IN')}
+              </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button variant="outline" size="icon" onClick={() => handleViewDetails(request)}>
                   <Eye className="h-4 w-4" />
