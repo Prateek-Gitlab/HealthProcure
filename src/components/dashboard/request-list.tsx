@@ -108,7 +108,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
           <TableHead className="text-right">Quantity</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Priority</TableHead>
-          <TableHead>Pending Since (Days)</TableHead>
+          {!isFiltered && <TableHead>Pending Since (Days)</TableHead>}
           <TableHead className="text-right">Total Cost (₹)</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -133,7 +133,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
                       {request.priority}
                   </Badge>
               </TableCell>
-              <TableCell className="text-center">{daysPending}</TableCell>
+              {!isFiltered && <TableCell className="text-center">{daysPending}</TableCell>}
               <TableCell className="text-right font-medium">
                 {totalCost.toLocaleString('en-IN')}
               </TableCell>
