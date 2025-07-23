@@ -62,6 +62,7 @@ async function getSheet(sheetName: string, headers: string[]) {
   if (!sheet) {
     sheet = await doc.addSheet({ title: sheetName, headerValues: headers });
   } else {
+    // This ensures the headers are always what the code expects.
     await sheet.setHeaderRow(headers);
   }
   return sheet;
@@ -101,6 +102,7 @@ export async function getRequests(): Promise<ProcurementRequest[]> {
         ...rowData,
         quantity: Number(rowData.quantity),
         pricePerUnit: rowData.pricePerUnit ? Number(rowData.pricePerUnit) : undefined,
+        priority: rowData.priority || 'Medium',
         auditLog: auditLog,
       } as ProcurementRequest;
     });
@@ -116,7 +118,7 @@ export async function addRow(newRequest: Omit<ProcurementRequest, 'id'>): Promis
     throw new Error("Application is not configured to connect to the database.");
   }
 
-  const id = `REQ-${String(Date.now()).slice(-6)}`;
+  const id = `REQ-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`;
   const requestWithId = { ...newRequest, id };
 
   const rowData: { [key: string]: string | number | boolean } = {};
