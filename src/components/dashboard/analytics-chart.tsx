@@ -15,13 +15,19 @@ interface AnalyticsChartProps {
 }
 
 export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsChartProps) {
-  const [selectedTaluka, setSelectedTaluka] = useState<string>('all');
+  const [selectedFilterId, setSelectedFilterId] = useState<string>('all'); // Can be district ID or taluka ID
   const [selectedCategory, setSelectedCategory] = useState<ProcurementCategory | 'all'>('all');
 
-  const subordinateTalukas = useMemo(() => {
-    if (currentUser.role === 'state') {
-      return allUsers.filter(u => u.role === 'taluka');
+  const isStateUser = currentUser.role === 'state';
+
+  const subordinateDistricts = useMemo(() => {
+    if (isStateUser) {
+      return allUsers.filter(u => u.role === 'district');
     }
+    return [];
+  }, [allUsers, isStateUser]);
+
+  const subordinateTalukas = useMemo(() => {
     if (currentUser.role === 'district') {
       return allUsers.filter(u => u.reportsTo === currentUser.id && u.role === 'taluka');
     }
@@ -31,56 +37,105 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
   const chartData = useMemo(() => {
     const approvedRequests = requests.filter(r => r.status === 'Approved');
 
-    if (selectedTaluka === 'all') {
-      // Logic for 'All Talukas' view
-      return subordinateTalukas.map(taluka => {
-        const talukaSubordinateBases = allUsers.filter(u => u.reportsTo === taluka.id).map(u => u.id);
+    if (selectedFilterId === 'all') {
+      if (isStateUser) {
+        // State user, 'All Districts' view: Show cost per district
+        return subordinateDistricts.map(district => {
+          const districtSubordinateTalukas = allUsers.filter(u => u.reportsTo === district.id).map(u => u.id);
+          const districtSubordinateBases = allUsers.filter(u => districtSubordinateTalukas.includes(u.reportsTo || '')).map(u => u.id);
+
+          const relevantRequests = approvedRequests.filter(req => {
+            const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
+            if (!submittedByUser) return false;
+            const isInCategory = selectedCategory === 'all' || req.category === selectedCategory;
+            return isInCategory && districtSubordinateBases.includes(submittedByUser.id);
+          });
+          const totalCost = relevantRequests.reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
+          return { name: district.name, totalCost };
+        });
+      } else {
+        // District user, 'All Talukas' view: Show cost per taluka
+        return subordinateTalukas.map(taluka => {
+          const talukaSubordinateBases = allUsers.filter(u => u.reportsTo === taluka.id).map(u => u.id);
+          const relevantRequests = approvedRequests.filter(req => {
+            const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
+            if (!submittedByUser) return false;
+            const isInCategory = selectedCategory === 'all' || req.category === selectedCategory;
+            return isInCategory && talukaSubordinateBases.includes(submittedByUser.id);
+          });
+          const totalCost = relevantRequests.reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
+          return { name: taluka.name, totalCost };
+        });
+      }
+    } else {
+      // A specific district or taluka is selected
+      if (isStateUser) {
+        // State user, single district selected: Show cost per taluka in that district
+        const selectedDistrict = allUsers.find(u => u.id === selectedFilterId);
+        if (!selectedDistrict) return [];
+
+        const talukasInDistrict = allUsers.filter(u => u.reportsTo === selectedDistrict.id && u.role === 'taluka');
+        return talukasInDistrict.map(taluka => {
+            const talukaBases = allUsers.filter(u => u.reportsTo === taluka.id).map(u=>u.id);
+            const talukaRequests = approvedRequests.filter(req => {
+                const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
+                if (!submittedByUser) return false;
+                const isInCategory = selectedCategory === 'all' || req.category === selectedCategory;
+                return isInCategory && talukaBases.includes(submittedByUser.id);
+            });
+            const totalCost = talukaRequests.reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
+            return { name: taluka.name, totalCost };
+        });
+      } else {
+        // District user, single taluka selected: Show cost per category in that taluka
+        const talukaUser = allUsers.find(u => u.id === selectedFilterId);
+        if (!talukaUser) return [];
+        
+        const talukaSubordinateBases = allUsers.filter(u => u.reportsTo === talukaUser.id).map(u => u.id);
         
         const relevantRequests = approvedRequests.filter(req => {
           const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
-          if (!submittedByUser) return false;
-  
-          const isInCategory = selectedCategory === 'all' || req.category === selectedCategory;
-          return isInCategory && talukaSubordinateBases.includes(submittedByUser.id);
+          return submittedByUser && talukaSubordinateBases.includes(submittedByUser.id);
         });
   
-        const totalCost = relevantRequests.reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
-        
-        return {
-          name: taluka.name,
-          totalCost: totalCost,
-        };
-      });
-    } else {
-      // Logic for single Taluka view (by category)
-      const talukaUser = allUsers.find(u => u.id === selectedTaluka);
-      if (!talukaUser) return [];
-      
-      const talukaSubordinateBases = allUsers.filter(u => u.reportsTo === talukaUser.id).map(u => u.id);
-      
-      const relevantRequests = approvedRequests.filter(req => {
-        const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
-        return submittedByUser && talukaSubordinateBases.includes(submittedByUser.id);
-      });
-
-      return procurementCategories.map(category => {
-        const categoryCost = relevantRequests
-          .filter(req => req.category === category)
-          .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
-        
-        return {
-          name: category,
-          totalCost: categoryCost,
-        };
-      });
+        return procurementCategories.map(category => {
+          const categoryCost = relevantRequests
+            .filter(req => req.category === category)
+            .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
+          
+          return { name: category, totalCost: categoryCost };
+        });
+      }
     }
-  }, [requests, allUsers, currentUser, selectedCategory, selectedTaluka, subordinateTalukas]);
+  }, [requests, allUsers, currentUser, selectedCategory, selectedFilterId, subordinateDistricts, subordinateTalukas, isStateUser]);
 
   if (currentUser.role !== 'district' && currentUser.role !== 'state') {
     return null;
   }
+  
+  const getSelectedEntityName = () => {
+    if (selectedFilterId === 'all') {
+        return isStateUser ? 'All Districts' : 'All Talukas';
+    }
+    return allUsers.find(u => u.id === selectedFilterId)?.name;
+  }
 
-  const isSingleTalukaView = selectedTaluka !== 'all';
+  const isSingleEntityView = selectedFilterId !== 'all';
+  const isSingleTalukaViewForDistrictUser = !isStateUser && isSingleEntityView;
+
+  const cardDescription = () => {
+    if (isStateUser) {
+        if(isSingleEntityView) {
+            return `Total cost by Taluka for ${getSelectedEntityName()}`;
+        }
+        return 'Total cost of approved requests by District.';
+    }
+    // District user
+    if (isSingleEntityView) {
+        return `Total cost by category for ${getSelectedEntityName()}`;
+    }
+    return 'Total cost of approved requests by Taluka.';
+  }
 
   return (
     <Card>
@@ -88,28 +143,24 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <CardTitle>Approved Request Analytics</CardTitle>
-                <CardDescription>
-                  {isSingleTalukaView
-                    ? `Total cost by category for ${allUsers.find(u => u.id === selectedTaluka)?.name}`
-                    : 'Total cost of approved requests by Taluka.'}
-                </CardDescription>
+                <CardDescription>{cardDescription()}</CardDescription>
             </div>
             <div className="flex gap-2">
-                <Select value={selectedTaluka} onValueChange={setSelectedTaluka}>
+                <Select value={selectedFilterId} onValueChange={setSelectedFilterId}>
                     <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select Taluka" />
+                        <SelectValue placeholder={isStateUser ? "Select District" : "Select Taluka"} />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="all">All Talukas</SelectItem>
-                        {subordinateTalukas.map(t => (
-                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        <SelectItem value="all">{isStateUser ? 'All Districts' : 'All Talukas'}</SelectItem>
+                        {(isStateUser ? subordinateDistricts : subordinateTalukas).map(item => (
+                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
                 <Select 
                     value={selectedCategory} 
                     onValueChange={(value) => setSelectedCategory(value as ProcurementCategory | 'all')}
-                    disabled={isSingleTalukaView}
+                    disabled={isSingleTalukaViewForDistrictUser}
                 >
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select Category" />
