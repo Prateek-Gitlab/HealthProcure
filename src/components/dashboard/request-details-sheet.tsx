@@ -28,6 +28,7 @@ export function RequestDetailsSheet({
 
   const { allUsers } = useAuth();
   const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
+  const totalCost = (request.pricePerUnit ?? 0) * request.quantity;
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
@@ -51,6 +52,14 @@ export function RequestDetailsSheet({
                             <p className="font-medium">{request.itemName}</p>
                             <p className="text-muted-foreground">Quantity</p>
                             <p className="font-medium">{request.quantity.toLocaleString()}</p>
+                            {request.pricePerUnit !== undefined && (
+                              <>
+                                <p className="text-muted-foreground">Price/unit</p>
+                                <p className="font-medium">₹{request.pricePerUnit.toLocaleString()}</p>
+                                <p className="text-muted-foreground">Total Cost</p>
+                                <p className="font-medium">₹{totalCost.toLocaleString()}</p>
+                              </>
+                            )}
                             <p className="text-muted-foreground">Priority</p>
                             <p className="font-medium">{request.priority}</p>
                             <p className="text-muted-foreground">Submitted By</p>
@@ -77,7 +86,7 @@ export function RequestDetailsSheet({
                     <Separator />
 
                     <div>
-                        <h3 className="font-semibold mb-4">Audit Log</h3>
+                        <h3 className="font-semibold mb-4">Professional Changelog</h3>
                         <div className="space-y-4">
                             {request.auditLog.map((log, index) => (
                                 <div key={index} className="flex items-start gap-4 text-sm">

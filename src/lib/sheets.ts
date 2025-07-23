@@ -37,6 +37,7 @@ const procurementHeaders = [
   'category',
   'itemName',
   'quantity',
+  'pricePerUnit',
   'priority',
   'justification',
   'submittedBy',
@@ -99,6 +100,7 @@ export async function getRequests(): Promise<ProcurementRequest[]> {
       return {
         ...rowData,
         quantity: Number(rowData.quantity),
+        pricePerUnit: rowData.pricePerUnit ? Number(rowData.pricePerUnit) : undefined,
         auditLog: auditLog,
       } as ProcurementRequest;
     });

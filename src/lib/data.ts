@@ -1,3 +1,4 @@
+
 import { getRequests, getUsers } from "./sheets";
 
 export type Role = 'base' | 'taluka' | 'district' | 'state';
@@ -32,6 +33,7 @@ export interface ProcurementRequest {
   category: ProcurementCategory;
   itemName:string;
   quantity: number;
+  pricePerUnit?: number;
   priority: Priority;
   justification: string;
   submittedBy: string; // User ID

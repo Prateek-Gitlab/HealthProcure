@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState } from "react";
@@ -40,6 +39,7 @@ interface StagedRequest {
   itemName: string;
   category: ProcurementCategory;
   quantity: number;
+  pricePerUnit: number;
   priority: Priority;
   justification: string;
 }
@@ -76,6 +76,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       itemName,
       category,
       quantity: 1,
+      pricePerUnit: 0,
       priority: "Medium",
       justification: "",
     }));
@@ -92,12 +93,12 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
   const handleStagedRequestChange = (
     index: number,
-    field: "quantity" | "justification" | "priority",
+    field: "quantity" | "justification" | "priority" | "pricePerUnit",
     value: string | number
   ) => {
     const updated = [...stagedRequests];
-    if (field === "quantity") {
-      updated[index].quantity = Number(value);
+    if (field === "quantity" || field === "pricePerUnit") {
+      updated[index][field] = Number(value);
     } else if (field === 'priority') {
       updated[index].priority = value as Priority;
     }
@@ -115,12 +116,12 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const handleSubmitAllStaged = async () => {
     if (!user) return;
 
-    const validRequests = stagedRequests.filter(req => req.quantity > 0 && req.justification.trim().length > 0);
+    const validRequests = stagedRequests.filter(req => req.quantity > 0 && req.justification.trim().length > 0 && req.pricePerUnit >= 0);
     
     if (validRequests.length !== stagedRequests.length) {
         toast({
             title: "Validation Error",
-            description: "Please ensure all selected items have a quantity and justification.",
+            description: "Please ensure all selected items have a quantity, justification and a valid price.",
             variant: "destructive",
         });
         return;
@@ -265,6 +266,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                             <TableRow>
                             <TableHead>Item Name</TableHead>
                             <TableHead className="w-[120px]">Quantity</TableHead>
+                            <TableHead className="w-[150px]">Price/unit (₹)</TableHead>
                             <TableHead className="w-[150px]">Priority</TableHead>
                             <TableHead>Justification</TableHead>
                             <TableHead className="w-[50px]"></TableHead>
@@ -283,6 +285,19 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                                     }
                                     className="w-full"
                                     min="1"
+                                    disabled={isSubmitting}
+                                />
+                                </TableCell>
+                                <TableCell>
+                                <Input
+                                    type="number"
+                                    value={req.pricePerUnit}
+                                    onChange={(e) =>
+                                    handleStagedRequestChange(index, "pricePerUnit", e.target.value)
+                                    }
+                                    className="w-full"
+                                    min="0"
+                                    step="0.01"
                                     disabled={isSubmitting}
                                 />
                                 </TableCell>

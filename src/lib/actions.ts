@@ -34,6 +34,7 @@ interface NewRequestData {
   quantity: number;
   priority: Priority;
   justification: string;
+  pricePerUnit?: number;
 }
 
 export async function addRequest(
