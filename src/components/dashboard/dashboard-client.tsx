@@ -165,7 +165,8 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     if (!submittedByUser) return false;
 
     if (user.role === 'taluka') {
-      return submittedByUser.reportsTo === user.id;
+      const mySubordinates = allUsers.filter(u => u.reportsTo === user.id && u.role === 'base').map(u => u.id);
+      return mySubordinates.includes(submittedByUser.id);
     }
   
     if (user.role === 'district') {
