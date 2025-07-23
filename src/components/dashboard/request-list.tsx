@@ -100,46 +100,55 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
           <TableHead className="text-right">Quantity</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Priority</TableHead>
+          {user && user.role !== 'base' && <TableHead className="text-right">Total Cost (₹)</TableHead>}
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
-        {requestList.map((request) => (
-          <TableRow key={request.id}>
-            <TableCell className="font-medium">{request.id}</TableCell>
-            <TableCell>{request.category}</TableCell>
-            <TableCell>{request.itemName}</TableCell>
-            <TableCell className="text-right">{request.quantity.toLocaleString()}</TableCell>
-            <TableCell>
-              <Badge variant={getStatusVariant(request.status)}>
-                {request.status}
-              </Badge>
-            </TableCell>
-            <TableCell>
-                <Badge className={cn("text-white", getPriorityClass(request.priority))}>
-                    {request.priority}
+        {requestList.map((request) => {
+          const totalCost = (request.pricePerUnit ?? 0) * request.quantity;
+          return (
+            <TableRow key={request.id}>
+              <TableCell className="font-medium">{request.id}</TableCell>
+              <TableCell>{request.category}</TableCell>
+              <TableCell>{request.itemName}</TableCell>
+              <TableCell className="text-right">{request.quantity.toLocaleString()}</TableCell>
+              <TableCell>
+                <Badge variant={getStatusVariant(request.status)}>
+                  {request.status}
                 </Badge>
-            </TableCell>
-            <TableCell className="text-right space-x-2">
-              <Button variant="outline" size="icon" onClick={() => handleViewDetails(request)}>
-                <Eye className="h-4 w-4" />
-                <span className="sr-only">View Details</span>
-              </Button>
-              {canApproveOrReject(request) && (
-                  <>
-                      <Button variant="outline" size="icon" className="text-green-600 hover:bg-green-100 hover:text-green-700 border-green-300" onClick={() => handleApprovalAction(request, "Approve")}>
-                          <Check className="h-4 w-4" />
-                          <span className="sr-only">Approve</span>
-                      </Button>
-                        <Button variant="outline" size="icon" className="text-red-600 hover:bg-red-100 hover:text-red-700 border-red-300" onClick={() => handleApprovalAction(request, "Reject")}>
-                          <X className="h-4 w-4" />
-                          <span className="sr-only">Reject</span>
-                      </Button>
-                  </>
+              </TableCell>
+              <TableCell>
+                  <Badge className={cn("text-white", getPriorityClass(request.priority))}>
+                      {request.priority}
+                  </Badge>
+              </TableCell>
+              {user && user.role !== 'base' && (
+                <TableCell className="text-right font-medium">
+                  {totalCost.toLocaleString('en-IN')}
+                </TableCell>
               )}
-            </TableCell>
-          </TableRow>
-        ))}
+              <TableCell className="text-right space-x-2">
+                <Button variant="outline" size="icon" onClick={() => handleViewDetails(request)}>
+                  <Eye className="h-4 w-4" />
+                  <span className="sr-only">View Details</span>
+                </Button>
+                {canApproveOrReject(request) && (
+                    <>
+                        <Button variant="outline" size="icon" className="text-green-600 hover:bg-green-100 hover:text-green-700 border-green-300" onClick={() => handleApprovalAction(request, "Approve")}>
+                            <Check className="h-4 w-4" />
+                            <span className="sr-only">Approve</span>
+                        </Button>
+                          <Button variant="outline" size="icon" className="text-red-600 hover:bg-red-100 hover:text-red-700 border-red-300" onClick={() => handleApprovalAction(request, "Reject")}>
+                            <X className="h-4 w-4" />
+                            <span className="sr-only">Reject</span>
+                        </Button>
+                    </>
+                )}
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );
