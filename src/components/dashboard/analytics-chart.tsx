@@ -31,41 +31,56 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
   const chartData = useMemo(() => {
     const approvedRequests = requests.filter(r => r.status === 'Approved');
 
-    const talukaData = subordinateTalukas.map(taluka => {
-      const talukaSubordinateBases = allUsers.filter(u => u.reportsTo === taluka.id).map(u => u.id);
+    if (selectedTaluka === 'all') {
+      // Logic for 'All Talukas' view
+      return subordinateTalukas.map(taluka => {
+        const talukaSubordinateBases = allUsers.filter(u => u.reportsTo === taluka.id).map(u => u.id);
+        
+        const relevantRequests = approvedRequests.filter(req => {
+          const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
+          if (!submittedByUser) return false;
+  
+          const isInCategory = selectedCategory === 'all' || req.category === selectedCategory;
+          return isInCategory && talukaSubordinateBases.includes(submittedByUser.id);
+        });
+  
+        const totalCost = relevantRequests.reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
+        
+        return {
+          name: taluka.name,
+          totalCost: totalCost,
+        };
+      });
+    } else {
+      // Logic for single Taluka view (by category)
+      const talukaUser = allUsers.find(u => u.id === selectedTaluka);
+      if (!talukaUser) return [];
+      
+      const talukaSubordinateBases = allUsers.filter(u => u.reportsTo === talukaUser.id).map(u => u.id);
       
       const relevantRequests = approvedRequests.filter(req => {
         const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
-        if (!submittedByUser) return false;
-
-        const isInCategory = selectedCategory === 'all' || req.category === selectedCategory;
-        
-        // District/State view logic
-        if (currentUser.role === 'district' || currentUser.role === 'state') {
-          return isInCategory && talukaSubordinateBases.includes(submittedByUser.id);
-        }
-
-        return false;
+        return submittedByUser && talukaSubordinateBases.includes(submittedByUser.id);
       });
 
-      const totalCost = relevantRequests.reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
-      
-      return {
-        name: taluka.name,
-        totalCost: totalCost,
-      };
-    });
-    
-    if (selectedTaluka !== 'all') {
-      return talukaData.filter(t => t.name === allUsers.find(u => u.id === selectedTaluka)?.name);
+      return procurementCategories.map(category => {
+        const categoryCost = relevantRequests
+          .filter(req => req.category === category)
+          .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
+        
+        return {
+          name: category,
+          totalCost: categoryCost,
+        };
+      });
     }
-
-    return talukaData;
   }, [requests, allUsers, currentUser, selectedCategory, selectedTaluka, subordinateTalukas]);
 
   if (currentUser.role !== 'district' && currentUser.role !== 'state') {
     return null;
   }
+
+  const isSingleTalukaView = selectedTaluka !== 'all';
 
   return (
     <Card>
@@ -73,7 +88,11 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <CardTitle>Approved Request Analytics</CardTitle>
-                <CardDescription>Total cost of approved requests by Taluka.</CardDescription>
+                <CardDescription>
+                  {isSingleTalukaView
+                    ? `Total cost by category for ${allUsers.find(u => u.id === selectedTaluka)?.name}`
+                    : 'Total cost of approved requests by Taluka.'}
+                </CardDescription>
             </div>
             <div className="flex gap-2">
                 <Select value={selectedTaluka} onValueChange={setSelectedTaluka}>
@@ -87,7 +106,11 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
                         ))}
                     </SelectContent>
                 </Select>
-                <Select value={selectedCategory} onValueChange={(value) => setSelectedCategory(value as ProcurementCategory | 'all')}>
+                <Select 
+                    value={selectedCategory} 
+                    onValueChange={(value) => setSelectedCategory(value as ProcurementCategory | 'all')}
+                    disabled={isSingleTalukaView}
+                >
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select Category" />
                     </SelectTrigger>
