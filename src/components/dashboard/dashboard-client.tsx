@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ProcurementRequest, ProcurementCategory, RequestStatus } from "@/lib/data";
+import type { ProcurementRequest, ProcurementCategory, RequestStatus, Priority } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import { addRequest } from "@/lib/actions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
@@ -19,10 +19,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { procurementPriorities } from "@/lib/data";
 
 interface DashboardClientProps {
   initialRequests: ProcurementRequest[];
@@ -32,6 +40,7 @@ interface StagedRequest {
   itemName: string;
   category: ProcurementCategory;
   quantity: number;
+  priority: Priority;
   justification: string;
 }
 
@@ -67,6 +76,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       itemName,
       category,
       quantity: 1,
+      priority: "Medium",
       justification: "",
     }));
 
@@ -82,13 +92,16 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
   const handleStagedRequestChange = (
     index: number,
-    field: "quantity" | "justification",
+    field: "quantity" | "justification" | "priority",
     value: string | number
   ) => {
     const updated = [...stagedRequests];
     if (field === "quantity") {
       updated[index].quantity = Number(value);
-    } else {
+    } else if (field === 'priority') {
+      updated[index].priority = value as Priority;
+    }
+     else {
       updated[index].justification = String(value);
     }
     setStagedRequests(updated);
@@ -155,6 +168,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     }
   
     if (user.role === 'district') {
+        if (r.status === 'Rejected') return false;
       const subordinateTalukaIds = allUsers.filter(u => u.reportsTo === user.id && u.role === 'taluka').map(u => u.id);
       return subordinateTalukaIds.includes(submittedByUser.reportsTo || '');
     }
@@ -251,6 +265,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                             <TableRow>
                             <TableHead>Item Name</TableHead>
                             <TableHead className="w-[120px]">Quantity</TableHead>
+                            <TableHead className="w-[150px]">Priority</TableHead>
                             <TableHead>Justification</TableHead>
                             <TableHead className="w-[50px]"></TableHead>
                             </TableRow>
@@ -270,6 +285,22 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                                     min="1"
                                     disabled={isSubmitting}
                                 />
+                                </TableCell>
+                                <TableCell>
+                                    <Select 
+                                        value={req.priority} 
+                                        onValueChange={(value) => handleStagedRequestChange(index, "priority", value)}
+                                        disabled={isSubmitting}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select priority" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {procurementPriorities.map(p => (
+                                                <SelectItem key={p} value={p}>{p}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </TableCell>
                                 <TableCell>
                                 <Textarea

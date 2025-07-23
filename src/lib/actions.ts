@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { ProcurementRequest, ProcurementCategory } from './data';
+import type { ProcurementRequest, ProcurementCategory, Priority } from './data';
 import { getAllUsers } from './data';
 import { addRow, updateRowByField } from './sheets';
 import { cookies } from 'next/headers';
@@ -32,6 +32,7 @@ interface NewRequestData {
   itemName: string;
   category: ProcurementCategory;
   quantity: number;
+  priority: Priority;
   justification: string;
 }
 

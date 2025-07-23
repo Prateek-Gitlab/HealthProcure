@@ -21,14 +21,18 @@ export type RequestStatus =
   | 'Approved'
   | 'Rejected';
 
+export const procurementPriorities = ['High', 'Medium', 'Low'] as const;
+export type Priority = typeof procurementPriorities[number];
+
 export const procurementCategories = ['HR', 'Infrastructure', 'Equipment', 'Training'] as const;
 export type ProcurementCategory = typeof procurementCategories[number];
 
 export interface ProcurementRequest {
   id: string;
   category: ProcurementCategory;
-  itemName: string;
+  itemName:string;
   quantity: number;
+  priority: Priority;
   justification: string;
   submittedBy: string; // User ID
   status: RequestStatus;

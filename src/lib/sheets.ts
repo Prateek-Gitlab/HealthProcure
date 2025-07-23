@@ -36,6 +36,7 @@ const procurementHeaders = [
   'category',
   'itemName',
   'quantity',
+  'priority',
   'justification',
   'submittedBy',
   'status',

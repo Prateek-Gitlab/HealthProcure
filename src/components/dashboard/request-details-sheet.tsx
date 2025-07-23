@@ -50,6 +50,8 @@ export function RequestDetailsSheet({
                             <p className="font-medium">{request.itemName}</p>
                             <p className="text-muted-foreground">Quantity</p>
                             <p className="font-medium">{request.quantity.toLocaleString()}</p>
+                            <p className="text-muted-foreground">Priority</p>
+                            <p className="font-medium">{request.priority}</p>
                             <p className="text-muted-foreground">Submitted By</p>
                             <p className="font-medium">{submittedByUser?.name || 'Unknown'}</p>
                             <p className="text-muted-foreground">Date Submitted</p>
