@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ProcurementRequest } from "@/lib/data";
+import type { ProcurementRequest, Priority } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import {
   Table,
@@ -31,6 +31,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { cn } from "@/lib/utils";
 
 
 interface RequestListProps {
@@ -76,6 +77,19 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
     }
   };
 
+  const getPriorityClass = (priority: Priority) => {
+    switch(priority) {
+      case 'High':
+        return 'bg-red-500 hover:bg-red-600';
+      case 'Medium':
+        return 'bg-yellow-500 hover:bg-yellow-600';
+      case 'Low':
+        return 'bg-blue-500 hover:bg-blue-600';
+      default:
+        return 'bg-gray-500 hover:bg-gray-600';
+    }
+  }
+
   const renderRequestTable = (requestList: ProcurementRequest[]) => (
     <Table>
       <TableHeader>
@@ -85,6 +99,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
           <TableHead>Item</TableHead>
           <TableHead className="text-right">Quantity</TableHead>
           <TableHead>Status</TableHead>
+          <TableHead>Priority</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>
@@ -99,6 +114,11 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
               <Badge variant={getStatusVariant(request.status)}>
                 {request.status}
               </Badge>
+            </TableCell>
+            <TableCell>
+                <Badge className={cn("text-white", getPriorityClass(request.priority))}>
+                    {request.priority}
+                </Badge>
             </TableCell>
             <TableCell className="text-right space-x-2">
               <Button variant="outline" size="icon" onClick={() => handleViewDetails(request)}>
