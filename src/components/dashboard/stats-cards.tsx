@@ -1,3 +1,4 @@
+
 import type { ProcurementRequest, Role, RequestStatus } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -18,7 +19,7 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
     switch(userRole) {
       case 'state':
       case 'district':
-        return 0; // No pending actions for them
+        return requests.filter(r => r.status === 'Pending Taluka Approval').length;
       case 'taluka':
         return requests.filter(r => r.status === 'Pending Taluka Approval').length;
       case 'base':
@@ -43,6 +44,7 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   const getPendingLabel = () => {
     if (userRole === 'base') return 'My Pending Requests';
     if (userRole === 'taluka') return 'Pending Your Approval';
+    if (userRole === 'district') return 'Total Pending Approval at Taluka Level';
     return 'Pending Approval';
   }
 
@@ -56,9 +58,6 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   );
   
   const handleCardClick = (filter: FilterStatus) => {
-    if (userRole !== 'taluka' && userRole !== 'base' && filter === 'pending') {
-      return; // Prevent clicking pending for district/state
-    }
     onFilterChange(filter);
   }
 
@@ -82,7 +81,6 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
       <Card 
         className={cardStyle('pending')} 
         onClick={() => handleCardClick('pending')}
-        style={{ opacity: (userRole === 'district' || userRole === 'state') ? 0.5 : 1, cursor: (userRole === 'district' || userRole === 'state') ? 'not-allowed' : 'pointer' }}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{getPendingLabel()}</CardTitle>
