@@ -60,6 +60,8 @@ async function getSheet(sheetName: string, headers: string[]) {
   let sheet = doc.sheetsByTitle[sheetName];
   if (!sheet) {
     sheet = await doc.addSheet({ title: sheetName, headerValues: headers });
+  } else {
+    await sheet.setHeaderRow(headers);
   }
   return sheet;
 }
