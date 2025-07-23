@@ -90,6 +90,14 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
     }
   }
 
+  const getDaysPending = (createdAt: string) => {
+    const createdDate = new Date(createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - createdDate.getTime());
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const renderRequestTable = (requestList: ProcurementRequest[]) => (
     <Table>
       <TableHeader>
@@ -100,6 +108,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
           <TableHead className="text-right">Quantity</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Priority</TableHead>
+          <TableHead>Pending Since (Days)</TableHead>
           <TableHead className="text-right">Total Cost (₹)</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -107,6 +116,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
       <TableBody>
         {requestList.map((request) => {
           const totalCost = (request.pricePerUnit ?? 0) * request.quantity;
+          const daysPending = getDaysPending(request.createdAt);
           return (
             <TableRow key={request.id}>
               <TableCell className="font-medium">{request.id}</TableCell>
@@ -123,6 +133,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
                       {request.priority}
                   </Badge>
               </TableCell>
+              <TableCell className="text-center">{daysPending}</TableCell>
               <TableCell className="text-right font-medium">
                 {totalCost.toLocaleString('en-IN')}
               </TableCell>
