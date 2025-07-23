@@ -1,3 +1,4 @@
+
 import { cn } from "@/lib/utils";
 import type { RequestStatus, ProcurementRequest } from "@/lib/data";
 import { Check, Hourglass, ThumbsUp, X } from "lucide-react";
@@ -7,42 +8,34 @@ interface RequestStatusStepperProps {
   auditLog: ProcurementRequest['auditLog'];
 }
 
-const steps = [
-  { name: "Submitted", statuses: [] as RequestStatus[] },
-  {
-    name: "Taluka Approval",
-    statuses: ["Pending Taluka Approval", "Approved"],
-  },
-  { name: "Fulfilled", statuses: ["Approved"] },
-];
-
 export function RequestStatusStepper({
   currentStatus,
   auditLog
 }: RequestStatusStepperProps) {
+
+  const finalStepName = currentStatus === "Approved" ? "Request Approved" : "Request Rejected";
+  const steps = [
+    { name: "Submitted", statuses: [] as RequestStatus[] },
+    {
+      name: "Taluka Approval",
+      statuses: ["Pending Taluka Approval", "Approved"],
+    },
+    { name: finalStepName, statuses: ["Approved"] },
+  ];
+
   const getStepStatus = (stepName: string) => {
     if (currentStatus === "Rejected") {
-        const rejectionAudit = auditLog.find(l => l.action === 'rejected');
-        const lastCompletedStepName = rejectionAudit ? steps[steps.findIndex(s => s.name.toLowerCase().includes(rejectionAudit.user.split(" ")[0].toLowerCase()))-1]?.name : "Submitted";
-        
-        const currentStepIndex = steps.findIndex((s) => s.name === stepName);
-        const lastCompletedIndex = steps.findIndex((s) => s.name === lastCompletedStepName);
-        
         if (stepName === "Submitted") return "completed";
-        
-        const rejectionStepIndex = auditLog.findIndex(l => l.action === 'rejected');
-        const rejectionUserRole = auditLog[rejectionStepIndex]?.user;
-
-        let rejectedAtIndex = -1;
-        if (rejectionUserRole?.toLowerCase().includes('taluka')) rejectedAtIndex = 1;
-
-        if (currentStepIndex < rejectedAtIndex) return "completed";
-        if (currentStepIndex === rejectedAtIndex) return "rejected";
+        if (stepName === "Taluka Approval") {
+            const talukaRejection = auditLog.find(l => l.action === 'rejected' && l.user.toLowerCase().includes('taluka'));
+            return talukaRejection ? "rejected" : "completed";
+        }
+        if(stepName === "Request Rejected") return "rejected";
         return "upcoming";
     }
 
     if (stepName === "Submitted") return "completed";
-    if (stepName === "Fulfilled") {
+    if (stepName === "Request Approved") {
       return currentStatus === "Approved" ? "completed" : "upcoming";
     }
 
@@ -57,19 +50,16 @@ export function RequestStatusStepper({
 
   const getIcon = (stepName: string) => {
     const status = getStepStatus(stepName);
-    if (currentStatus === "Rejected") {
-      if (status === "rejected") return <X className="h-5 w-5" />;
-      if (status === "completed") return <Check className="h-5 w-5" />;
-      return <div className="h-2.5 w-2.5 bg-border rounded-full" />;
+    
+    if (status === "rejected") return <X className="h-5 w-5" />;
+    
+    if (currentStatus === "Approved" && stepName === "Request Approved") {
+        return <ThumbsUp className="h-5 w-5" />;
     }
 
     switch (status) {
       case "completed":
-        return stepName === "Fulfilled" ? (
-          <ThumbsUp className="h-5 w-5" />
-        ) : (
-          <Check className="h-5 w-5" />
-        );
+        return <Check className="h-5 w-5" />;
       case "current":
         return <Hourglass className="h-5 w-5 animate-spin" />;
       default:
@@ -79,7 +69,7 @@ export function RequestStatusStepper({
 
   const getIconColor = (stepName: string) => {
     const status = getStepStatus(stepName);
-    if (currentStatus === "Rejected" && status === "rejected")
+    if (status === "rejected")
       return "bg-destructive text-destructive-foreground";
     if (status === "completed") return "bg-primary text-primary-foreground";
     if (status === "current") return "bg-yellow-400 text-yellow-900";
@@ -89,18 +79,13 @@ export function RequestStatusStepper({
   const isStepCompleted = (stepName: string) => {
     const currentStepIndex = steps.findIndex((s) => s.name === stepName);
     if (currentStepIndex === -1) return false;
-
-    // The first step "Submitted" is always considered completed as a baseline
     if (currentStepIndex === 0) return true;
 
     if (currentStatus === "Rejected") {
         const rejectionAudit = auditLog.find(l => l.action === 'rejected');
         if(!rejectionAudit) return false;
-
-        let rejectionLevel = -1;
-        if(rejectionAudit.user.toLowerCase().includes('taluka')) rejectionLevel = 1;
-
-        return currentStepIndex < rejectionLevel;
+        if(rejectionAudit.user.toLowerCase().includes('taluka')) return currentStepIndex < 1;
+        return false;
     }
     
     const requiredStatusForCompletion = steps[currentStepIndex-1].statuses[0];
@@ -121,7 +106,7 @@ export function RequestStatusStepper({
             key={step.name}
             className={cn("relative", stepIdx === steps.length - 1 ? "flex-shrink-0" : "flex-1")}
           >
-              {stepIdx < steps.length - 1 ? (
+              {currentStatus !== 'Rejected' && stepIdx < steps.length - 1 ? (
                 <div
                   className="absolute left-4 top-4 -ml-px mt-px h-0.5 w-full"
                   aria-hidden="true"
