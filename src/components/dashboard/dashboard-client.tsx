@@ -245,10 +245,8 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       />
 
       {(user.role === 'district' || user.role === 'state') && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
-                <AnalyticsChart requests={requests} allUsers={allUsers} currentUser={user} />
-            </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <AnalyticsChart requests={requests} allUsers={allUsers} currentUser={user} />
             <PlaceholderChart />
         </div>
       )}
