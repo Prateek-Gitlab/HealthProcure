@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MultiSelectItemProps {
   options: string[];
@@ -79,24 +80,26 @@ export function MultiSelectItem({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder="Search options..." />
-          <CommandList className="max-h-[300px] overflow-y-auto">
+          <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
             <CommandGroup>
-              {options.map((option) => (
-                <CommandItem
-                  key={option}
-                  onSelect={() => handleSelect(option)}
-                  className="cursor-pointer"
-                >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      selected.includes(option) ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {option}
-                </CommandItem>
-              ))}
+                <ScrollArea className="h-72">
+                    {options.map((option) => (
+                        <CommandItem
+                        key={option}
+                        onSelect={() => handleSelect(option)}
+                        className="cursor-pointer"
+                        >
+                        <Check
+                            className={cn(
+                            "mr-2 h-4 w-4",
+                            selected.includes(option) ? "opacity-100" : "opacity-0"
+                            )}
+                        />
+                        {option}
+                        </CommandItem>
+                    ))}
+                </ScrollArea>
             </CommandGroup>
           </CommandList>
         </Command>
