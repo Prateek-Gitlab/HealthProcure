@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
-  CommandGroup,
   CommandInput,
   CommandItem,
   CommandList,
+  CommandGroup,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -80,8 +80,9 @@ export function MultiSelectItem({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder="Search options..." />
+          <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
-            <CommandList>
+            <CommandGroup>
               <ScrollArea className="h-72">
                 {options.map((option) => (
                   <CommandItem
@@ -99,7 +100,8 @@ export function MultiSelectItem({
                   </CommandItem>
                 ))}
               </ScrollArea>
-            </CommandList>
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
