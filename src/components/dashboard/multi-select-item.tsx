@@ -80,28 +80,26 @@ export function MultiSelectItem({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder="Search options..." />
-          <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
-            <CommandGroup>
-                <ScrollArea className="h-72">
-                    {options.map((option) => (
-                        <CommandItem
-                        key={option}
-                        onSelect={() => handleSelect(option)}
-                        className="cursor-pointer"
-                        >
-                        <Check
-                            className={cn(
-                            "mr-2 h-4 w-4",
-                            selected.includes(option) ? "opacity-100" : "opacity-0"
-                            )}
-                        />
-                        {option}
-                        </CommandItem>
-                    ))}
-                </ScrollArea>
-            </CommandGroup>
-          </CommandList>
+            <CommandList>
+              <ScrollArea className="h-72">
+                {options.map((option) => (
+                  <CommandItem
+                    key={option}
+                    onSelect={() => handleSelect(option)}
+                    className="cursor-pointer"
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selected.includes(option) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {option}
+                  </CommandItem>
+                ))}
+              </ScrollArea>
+            </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
