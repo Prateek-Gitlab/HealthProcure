@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import type { ProcurementRequest, Priority, User } from "@/lib/data";
+import type { ProcurementRequest, Priority, User, ProcurementCategory } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import {
   Table,
@@ -90,14 +90,6 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
     }
   }
 
-  const getDaysPending = (createdAt: string) => {
-    const createdDate = new Date(createdAt);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - createdDate.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  };
-
   const renderRequestTable = (requestList: ProcurementRequest[]) => (
     <Table>
       <TableHeader>
@@ -108,7 +100,6 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
           <TableHead className="text-right">Quantity</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Priority</TableHead>
-          {!isFiltered && <TableHead>Pending Since (Days)</TableHead>}
           <TableHead className="text-right">Total Cost (₹)</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -116,7 +107,6 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
       <TableBody>
         {requestList.map((request) => {
           const totalCost = (request.pricePerUnit ?? 0) * request.quantity;
-          const daysPending = getDaysPending(request.createdAt);
           return (
             <TableRow key={request.id}>
               <TableCell className="font-medium">{request.id}</TableCell>
@@ -133,7 +123,6 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
                       {request.priority}
                   </Badge>
               </TableCell>
-              {!isFiltered && <TableCell className="text-center">{daysPending}</TableCell>}
               <TableCell className="text-right font-medium">
                 {totalCost.toLocaleString('en-IN')}
               </TableCell>
@@ -177,35 +166,58 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
       </Card>
     );
   }
-
-  const getGroupedView = () => {
-    return requests.reduce((acc, request) => {
-      const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
-      if (!submittedByUser) {
-        return acc;
-      }
-  
-      let groupName = 'My Requests';
-      if (user?.role === 'district' || user?.role === 'state') {
-        const talukaUser = allUsers.find(u => u.id === submittedByUser.reportsTo && u.role === 'taluka');
-        if (talukaUser) {
-          groupName = `Pending with ${talukaUser.name}`;
-        } else if (submittedByUser.role !== 'base') {
-          groupName = submittedByUser.name; // Group by taluka/district directly if they submitted
-        }
-      } else if (user?.role === 'taluka') {
-        groupName = submittedByUser.name; // Taluka user sees groups by base user
-      }
-  
-      if (!acc[groupName]) {
-        acc[groupName] = [];
-      }
-      acc[groupName].push(request);
-      return acc;
-    }, {} as Record<string, ProcurementRequest[]>);
-  };
   
   const renderGroupedView = () => {
+    if (user?.role === 'taluka') {
+      const groupedByFacility = requests.reduce((acc, request) => {
+        const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
+        if (!submittedByUser) return acc;
+  
+        const facilityName = submittedByUser.name;
+        if (!acc[facilityName]) {
+          acc[facilityName] = {};
+        }
+  
+        const category = request.category;
+        if (!acc[facilityName][category]) {
+          acc[facilityName][category] = [];
+        }
+        acc[facilityName][category].push(request);
+        return acc;
+      }, {} as Record<string, Record<string, ProcurementRequest[]>>);
+  
+      const facilityNames = Object.keys(groupedByFacility).sort();
+
+      return (
+        <Accordion type="multiple" className="w-full space-y-4">
+          {facilityNames.map(facilityName => (
+            <AccordionItem value={facilityName} key={facilityName} className="border-b-0">
+               <Card>
+                  <AccordionTrigger className="p-6 text-lg font-semibold hover:no-underline">
+                    {facilityName} ({Object.values(groupedByFacility[facilityName]).flat().length} requests)
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-6">
+                    <Accordion type="multiple" className="w-full space-y-2">
+                      {Object.keys(groupedByFacility[facilityName]).map(category => (
+                        <AccordionItem value={category} key={category} className="border rounded-md">
+                          <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
+                              {category} ({groupedByFacility[facilityName][category].length} requests)
+                          </AccordionTrigger>
+                          <AccordionContent className="p-0 border-t">
+                              {renderRequestTable(groupedByFacility[facilityName][category])}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </AccordionContent>
+                </Card>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      );
+    }
+    
+    // Default grouping for district and state users
     const groupedRequests = requests.reduce((acc, request) => {
       const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
   
