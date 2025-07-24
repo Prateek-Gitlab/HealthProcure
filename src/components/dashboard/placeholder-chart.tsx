@@ -1,8 +1,37 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { AreaChart } from "lucide-react";
+import { AreaChart, IndianRupee } from "lucide-react";
+import type { User } from "@/lib/data";
 
-export function PlaceholderChart() {
+interface PlaceholderChartProps {
+    currentUser: User;
+    totalApprovedBudget: number;
+}
+
+export function PlaceholderChart({ currentUser, totalApprovedBudget }: PlaceholderChartProps) {
+
+    if (currentUser.role === 'state') {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>Budget Overview</CardTitle>
+                    <CardDescription>Total sanctioned amount for all approved requests.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex flex-col items-center justify-center h-[300px] bg-secondary rounded-md p-6">
+                        <div className="flex items-center justify-center bg-primary/10 text-primary p-4 rounded-full mb-4">
+                            <IndianRupee className="w-12 h-12" />
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-1">Total Budget for Approved Requests</p>
+                        <p className="text-4xl font-bold">
+                            {`₹${totalApprovedBudget.toLocaleString('en-IN')}`}
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
+
     return (
         <Card>
             <CardHeader>

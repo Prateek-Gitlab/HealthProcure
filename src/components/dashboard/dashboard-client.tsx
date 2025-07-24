@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import type { ProcurementRequest, ProcurementCategory, RequestStatus, Priority } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import { addRequest } from "@/lib/actions";
@@ -57,6 +57,12 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  const totalApprovedBudget = useMemo(() => {
+    return requests
+      .filter(r => r.status === 'Approved')
+      .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
+  }, [requests]);
 
   if (!user) {
     return null;
@@ -247,7 +253,10 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       {(user.role === 'district' || user.role === 'state') && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <AnalyticsChart requests={requests} allUsers={allUsers} currentUser={user} />
-            <PlaceholderChart />
+            <PlaceholderChart 
+              currentUser={user}
+              totalApprovedBudget={totalApprovedBudget}
+            />
         </div>
       )}
 
