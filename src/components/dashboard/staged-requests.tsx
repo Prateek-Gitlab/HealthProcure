@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { ProcurementCategory, StagedRequest, Priority } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Send, XCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Send, XCircle, Loader2, Sparkles } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -26,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RequestForm } from "./request-form";
 import { procurementPriorities } from "@/lib/data";
+import { generateJustification } from "@/ai/flows/justification-flow";
 
 interface StagedRequestsProps {
     onSubmit: (stagedRequests: StagedRequest[]) => Promise<boolean>;
@@ -34,6 +35,7 @@ interface StagedRequestsProps {
 export function StagedRequests({ onSubmit }: StagedRequestsProps) {
   const [stagedRequests, setStagedRequests] = useState<StagedRequest[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { toast } = useToast();
 
@@ -81,6 +83,40 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
     setStagedRequests(updated);
   }
 
+  const handleGenerateJustifications = async () => {
+    setIsGenerating(true);
+    try {
+        const justificationsPromises = stagedRequests.map(req => 
+            generateJustification({
+                itemName: req.itemName,
+                category: req.category,
+                quantity: req.quantity
+            })
+        );
+        const generatedJustifications = await Promise.all(justificationsPromises);
+
+        const updatedRequests = stagedRequests.map((req, index) => ({
+            ...req,
+            justification: generatedJustifications[index].justification,
+        }));
+
+        setStagedRequests(updatedRequests);
+        toast({
+            title: "Justifications Generated",
+            description: "AI-powered justifications have been added to your requests.",
+        });
+    } catch (error) {
+        console.error("Failed to generate justifications:", error);
+        toast({
+            title: "Generation Error",
+            description: "An error occurred while generating justifications.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsGenerating(false);
+    }
+  }
+
   const handleSubmitAllStaged = async () => {
     const validRequests = stagedRequests.filter(req => req.quantity > 0 && req.justification.trim().length > 0 && req.pricePerUnit >= 0);
     
@@ -101,6 +137,8 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
     setIsSubmitting(false);
   };
 
+  const disableActions = isSubmitting || isGenerating;
+
   return (
     <>
         <Card>
@@ -109,7 +147,7 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                     <CardTitle>New Requests</CardTitle>
                     <CardDescription>Create and manage procurement requests before submission.</CardDescription>
                 </div>
-                <Button onClick={() => setIsFormOpen(true)}>
+                <Button onClick={() => setIsFormOpen(true)} disabled={disableActions}>
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Add Items
                 </Button>
@@ -142,7 +180,7 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                                     }
                                     className="w-full"
                                     min="1"
-                                    disabled={isSubmitting}
+                                    disabled={disableActions}
                                 />
                                 </TableCell>
                                 <TableCell>
@@ -155,14 +193,14 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                                     className="w-full"
                                     min="0"
                                     step="0.01"
-                                    disabled={isSubmitting}
+                                    disabled={disableActions}
                                 />
                                 </TableCell>
                                 <TableCell>
                                     <Select 
                                         value={req.priority} 
                                         onValueChange={(value) => handleStagedRequestChange(index, "priority", value)}
-                                        disabled={isSubmitting}
+                                        disabled={disableActions}
                                     >
                                         <SelectTrigger>
                                             <SelectValue placeholder="Select priority" />
@@ -180,13 +218,14 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                                     onChange={(e) =>
                                     handleStagedRequestChange(index, "justification", e.target.value)
                                     }
-                                    placeholder="Enter justification..."
+                                    placeholder="Enter justification or generate one..."
                                     className="w-full"
-                                    disabled={isSubmitting}
+                                    rows={3}
+                                    disabled={disableActions}
                                 />
                                 </TableCell>
                                 <TableCell>
-                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveStagedRequest(index)} disabled={isSubmitting}>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveStagedRequest(index)} disabled={disableActions}>
                                         <XCircle className="h-4 w-4 text-muted-foreground"/>
                                     </Button>
                                 </TableCell>
@@ -195,8 +234,25 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                         </TableBody>
                     </Table>
                 </div>
-                <div className="flex justify-end mt-4">
-                    <Button onClick={handleSubmitAllStaged} disabled={isSubmitting || stagedRequests.length === 0}>
+                <div className="flex justify-end mt-4 space-x-2">
+                    <Button 
+                        variant="outline"
+                        onClick={handleGenerateJustifications} 
+                        disabled={disableActions || stagedRequests.some(r => r.quantity <= 0)}
+                    >
+                         {isGenerating ? (
+                            <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="mr-2 h-4 w-4" />
+                                Generate Justifications
+                            </>
+                        )}
+                    </Button>
+                    <Button onClick={handleSubmitAllStaged} disabled={disableActions || stagedRequests.length === 0}>
                     {isSubmitting ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
