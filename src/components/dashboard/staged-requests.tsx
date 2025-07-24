@@ -65,13 +65,11 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
       justification: "",
     }));
 
-    const combined = [...stagedRequests, ...newStagedRequests];
-    const unique = combined.filter(
-      (v, i, a) => a.findIndex((t) => t.itemName === v.itemName) === i
-    );
+    // Prevent duplicates
+    const existingItemNames = new Set(stagedRequests.map(req => req.itemName));
+    const uniqueNewRequests = newStagedRequests.filter(req => !existingItemNames.has(req.itemName));
 
-    setStagedRequests(unique);
-    setIsFormOpen(false);
+    setStagedRequests(prev => [...prev, ...uniqueNewRequests]);
   };
 
   const handleStagedRequestChange = (
@@ -222,6 +220,7 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                                 />
                             </TableHead>
                             <TableHead>Item Name</TableHead>
+                            <TableHead>Category</TableHead>
                             <TableHead className="w-[120px]">Quantity</TableHead>
                             <TableHead className="w-[150px]">Price/unit (₹)</TableHead>
                             <TableHead className="w-[150px]">Priority</TableHead>
@@ -231,7 +230,7 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                         </TableHeader>
                         <TableBody>
                             {stagedRequests.map((req, index) => (
-                            <TableRow key={index} data-state={selectedIndices.includes(index) ? 'selected' : ''}>
+                            <TableRow key={`${req.itemName}-${index}`} data-state={selectedIndices.includes(index) ? 'selected' : ''}>
                                 <TableCell>
                                     <Checkbox 
                                         checked={selectedIndices.includes(index)}
@@ -240,6 +239,7 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                                     />
                                 </TableCell>
                                 <TableCell className="font-medium">{req.itemName}</TableCell>
+                                <TableCell>{req.category}</TableCell>
                                 <TableCell>
                                 <Input
                                     type="number"
@@ -339,5 +339,3 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
     </>
   );
 }
-
-    
