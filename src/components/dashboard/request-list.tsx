@@ -168,6 +168,75 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
   }
   
   const renderGroupedView = () => {
+    if (user?.role === 'state' && isFiltered) {
+        const getUserById = (id: string) => allUsers.find(u => u.id === id);
+        
+        const getHierarchy = (userId: string): User[] => {
+            const user = getUserById(userId);
+            if (!user) return [];
+            if (!user.reportsTo) return [user];
+            return [...getHierarchy(user.reportsTo), user];
+        };
+
+        const groupedByDistrict = requests.reduce((acc, request) => {
+            const submittedByUser = getUserById(request.submittedBy);
+            if (!submittedByUser || submittedByUser.role !== 'base') return acc;
+            
+            const hierarchy = getHierarchy(submittedByUser.id);
+            const talukaUser = hierarchy.find(u => u.role === 'taluka');
+            const districtUser = hierarchy.find(u => u.role === 'district');
+            
+            if (!districtUser || !talukaUser) return acc;
+            
+            if (!acc[districtUser.name]) acc[districtUser.name] = {};
+            if (!acc[districtUser.name][talukaUser.name]) acc[districtUser.name][talukaUser.name] = {};
+            if (!acc[districtUser.name][talukaUser.name][submittedByUser.name]) acc[districtUser.name][talukaUser.name][submittedByUser.name] = [];
+            
+            acc[districtUser.name][talukaUser.name][submittedByUser.name].push(request);
+            
+            return acc;
+        }, {} as Record<string, Record<string, Record<string, ProcurementRequest[]>>>);
+
+        return (
+            <Accordion type="multiple" className="w-full space-y-4">
+                {Object.entries(groupedByDistrict).map(([districtName, talukas]) => (
+                    <AccordionItem value={districtName} key={districtName} className="border-b-0">
+                        <Card>
+                            <AccordionTrigger className="p-6 text-lg font-semibold hover:no-underline">
+                                {districtName}
+                            </AccordionTrigger>
+                            <AccordionContent className="px-6 pb-6">
+                                <Accordion type="multiple" className="w-full space-y-2">
+                                    {Object.entries(talukas).map(([talukaName, bases]) => (
+                                        <AccordionItem value={talukaName} key={talukaName} className="border rounded-md">
+                                            <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
+                                                {talukaName}
+                                            </AccordionTrigger>
+                                            <AccordionContent className="p-0 border-t">
+                                                <Accordion type="multiple" className="w-full">
+                                                    {Object.entries(bases).map(([baseName, baseRequests]) => (
+                                                        <AccordionItem value={baseName} key={baseName} className="border-b">
+                                                            <AccordionTrigger className="p-3 text-sm font-normal hover:no-underline">
+                                                                {baseName} ({baseRequests.length} requests)
+                                                            </AccordionTrigger>
+                                                            <AccordionContent className="p-0">
+                                                                {renderRequestTable(baseRequests)}
+                                                            </AccordionContent>
+                                                        </AccordionItem>
+                                                    ))}
+                                                </Accordion>
+                                            </AccordionContent>
+                                        </AccordionItem>
+                                    ))}
+                                </Accordion>
+                            </AccordionContent>
+                        </Card>
+                    </AccordionItem>
+                ))}
+            </Accordion>
+        );
+    }
+
     if (user?.role === 'taluka') {
       const groupedByFacility = requests.reduce((acc, request) => {
         const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
@@ -217,7 +286,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
       );
     }
     
-    // Default grouping for district and state users
+    // Default grouping for district and state users (when not filtered)
     const groupedRequests = requests.reduce((acc, request) => {
       const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
   
