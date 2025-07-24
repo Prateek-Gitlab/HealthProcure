@@ -15,7 +15,7 @@ export function PlaceholderChart({ currentUser, totalApprovedBudget }: Placehold
             <Card>
                 <CardHeader>
                     <CardTitle>Budget Overview</CardTitle>
-                    <CardDescription>Total sanctioned amount for all approved requests.</CardDescription>
+                    <CardDescription>Total budgetary outlay required based on approved requests</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="flex flex-col items-center justify-center h-[300px] bg-secondary rounded-md p-6">
