@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { ProcurementCategory, StagedRequest, Priority } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Send, XCircle, Loader2 } from "lucide-react";
+import { PlusCircle, Send, XCircle, Loader2, Edit } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,11 +21,22 @@ import {
     SelectTrigger,
     SelectValue,
   } from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from "@/components/ui/dialog";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RequestForm } from "./request-form";
 import { procurementPriorities } from "@/lib/data";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 interface StagedRequestsProps {
     onSubmit: (stagedRequests: StagedRequest[]) => Promise<boolean>;
@@ -33,8 +44,12 @@ interface StagedRequestsProps {
 
 export function StagedRequests({ onSubmit }: StagedRequestsProps) {
   const [stagedRequests, setStagedRequests] = useState<StagedRequest[]>([]);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
+  const [bulkPriority, setBulkPriority] = useState<Priority | "">("");
+  const [bulkJustification, setBulkJustification] = useState("");
   const { toast } = useToast();
 
   const handleItemsSelected = (
@@ -101,7 +116,42 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
     setIsSubmitting(false);
   };
 
+  const handleSelectRow = (index: number, checked: boolean) => {
+    if (checked) {
+        setSelectedIndices(prev => [...prev, index]);
+    } else {
+        setSelectedIndices(prev => prev.filter(i => i !== index));
+    }
+  }
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+        setSelectedIndices(stagedRequests.map((_, i) => i));
+    } else {
+        setSelectedIndices([]);
+    }
+  }
+
+  const handleApplyBulkEdit = () => {
+    const updatedRequests = [...stagedRequests];
+    selectedIndices.forEach(index => {
+        if (bulkPriority) {
+            updatedRequests[index].priority = bulkPriority;
+        }
+        if (bulkJustification.trim()) {
+            updatedRequests[index].justification = bulkJustification;
+        }
+    });
+    setStagedRequests(updatedRequests);
+    setIsBulkEditOpen(false);
+    setBulkPriority("");
+    setBulkJustification("");
+    setSelectedIndices([]);
+  }
+
   const disableActions = isSubmitting;
+  const isAllSelected = selectedIndices.length > 0 && selectedIndices.length === stagedRequests.length;
+  const isIndeterminate = selectedIndices.length > 0 && !isAllSelected;
 
   return (
     <>
@@ -111,10 +161,50 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                     <CardTitle>New Requests</CardTitle>
                     <CardDescription>Create and manage procurement requests before submission.</CardDescription>
                 </div>
-                <Button onClick={() => setIsFormOpen(true)} disabled={disableActions}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Items
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Dialog open={isBulkEditOpen} onOpenChange={setIsBulkEditOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant="outline" disabled={disableActions || selectedIndices.length === 0}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Bulk Edit ({selectedIndices.length})
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Bulk Edit Requests</DialogTitle>
+                                <DialogDescription>Apply changes to all {selectedIndices.length} selected items. Leave fields blank to keep original values.</DialogDescription>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="bulk-priority">Priority</Label>
+                                    <Select value={bulkPriority} onValueChange={(value) => setBulkPriority(value as Priority)}>
+                                        <SelectTrigger id="bulk-priority">
+                                            <SelectValue placeholder="Select priority" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {procurementPriorities.map(p => (
+                                                <SelectItem key={p} value={p}>{p}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="bulk-justification">Justification</Label>
+                                    <Textarea id="bulk-justification" value={bulkJustification} onChange={e => setBulkJustification(e.target.value)} placeholder="Enter a justification to apply to all selected items." />
+                                </div>
+                            </div>
+                            <DialogFooter>
+                                <Button variant="ghost" onClick={() => setIsBulkEditOpen(false)}>Cancel</Button>
+                                <Button onClick={handleApplyBulkEdit}>Apply Changes</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Button onClick={() => setIsFormOpen(true)} disabled={disableActions}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add Items
+                    </Button>
+                </div>
             </CardHeader>
             
             {stagedRequests.length > 0 && (
@@ -123,6 +213,14 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                     <Table>
                         <TableHeader>
                             <TableRow>
+                            <TableHead className="w-[50px]">
+                                <Checkbox 
+                                    checked={isAllSelected}
+                                    onCheckedChange={handleSelectAll}
+                                    aria-label="Select all rows"
+                                    data-state={isIndeterminate ? 'indeterminate' : (isAllSelected ? 'checked' : 'unchecked')}
+                                />
+                            </TableHead>
                             <TableHead>Item Name</TableHead>
                             <TableHead className="w-[120px]">Quantity</TableHead>
                             <TableHead className="w-[150px]">Price/unit (₹)</TableHead>
@@ -133,7 +231,14 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
                         </TableHeader>
                         <TableBody>
                             {stagedRequests.map((req, index) => (
-                            <TableRow key={index}>
+                            <TableRow key={index} data-state={selectedIndices.includes(index) ? 'selected' : ''}>
+                                <TableCell>
+                                    <Checkbox 
+                                        checked={selectedIndices.includes(index)}
+                                        onCheckedChange={(checked) => handleSelectRow(index, !!checked)}
+                                        aria-label={`Select row ${index + 1}`}
+                                    />
+                                </TableCell>
                                 <TableCell className="font-medium">{req.itemName}</TableCell>
                                 <TableCell>
                                 <Input
@@ -234,3 +339,5 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
     </>
   );
 }
+
+    
