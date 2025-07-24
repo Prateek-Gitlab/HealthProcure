@@ -1,8 +1,8 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
-import type { ProcurementRequest, ProcurementCategory, RequestStatus, Priority } from "@/lib/data";
+import { useState, useMemo, useCallback } from "react";
+import type { ProcurementRequest, ProcurementCategory, RequestStatus, Priority, User } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import { addRequest } from "@/lib/actions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
@@ -163,64 +163,75 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         setIsSubmitting(false);
     }
   };
-  
-  const allUserRequests = requests.filter((r) => {
-    if (user.role === "base") {
-      return r.submittedBy === user.id;
-    }
-    
-    const submittedByUser = allUsers.find(u => u.id === r.submittedBy);
-    if (!submittedByUser) return false;
 
-    if (user.role === 'taluka') {
-      const mySubordinates = allUsers.filter(u => u.reportsTo === user.id && u.role === 'base').map(u => u.id);
-      return mySubordinates.includes(submittedByUser.id);
-    }
-  
-    if (user.role === 'district') {
-        if (r.status === 'Rejected') return false;
-      const subordinateTalukaIds = allUsers.filter(u => u.reportsTo === user.id && u.role === 'taluka').map(u => u.id);
-      return subordinateTalukaIds.includes(submittedByUser.reportsTo || '');
-    }
+  const getSubordinateIds = useCallback((managerId: string): string[] => {
+    const directSubordinates = allUsers.filter(u => u.reportsTo === managerId);
+    let allSubordinateIds = directSubordinates.map(u => u.id);
+    
+    directSubordinates.forEach(subordinate => {
+        allSubordinateIds = [...allSubordinateIds, ...getSubordinateIds(subordinate.id)];
+    });
+
+    return allSubordinateIds;
+  }, [allUsers]);
+
+  const allUserRequests = useMemo(() => {
+    if (!user) return [];
   
     if (user.role === 'state') {
-      return true;
+      return requests;
     }
   
-    return false;
-  });
+    const subordinateIds = getSubordinateIds(user.id);
+    const allVisibleUserIds = [user.id, ...subordinateIds];
+
+    return requests.filter(r => {
+      // Base user sees their own requests
+      if (user.role === "base") {
+        return r.submittedBy === user.id;
+      }
+      
+      // Other roles see requests submitted by their subordinates
+      return allVisibleUserIds.includes(r.submittedBy);
+    });
+  }, [requests, user, allUsers, getSubordinateIds]);
   
   const visibleRequests = () => {
+    const filteredForRejected = user.role === 'district' || user.role === 'state' 
+        ? allUserRequests.filter(r => r.status !== 'Rejected') 
+        : allUserRequests;
+
     if (filterStatus === 'pending') {
         switch (user.role) {
           case "state":
           case "district":
-            return allUserRequests.filter(
+            return filteredForRejected.filter(
               (r) => r.status === "Pending Taluka Approval"
             );
           case "taluka":
-            return allUserRequests.filter(
+            return filteredForRejected.filter(
               (r) => r.status === "Pending Taluka Approval"
             );
           case "base":
-            return allUserRequests.filter((r) => r.status.startsWith('Pending'));
+            return filteredForRejected.filter((r) => r.status.startsWith('Pending'));
           default:
             return [];
         }
     }
     if (filterStatus === 'approved-by-me') {
        if (user.role === 'taluka') {
-          return allUserRequests.filter(r => r.status === 'Approved');
+          return filteredForRejected.filter(r => r.status === 'Approved');
         }
         if (user.role === 'district') {
-          return allUserRequests.filter(r => r.status === 'Approved');
+          return filteredForRejected.filter(r => r.status === 'Approved');
         }
         // For state and base users, this is just final approved
-        return allUserRequests.filter(r => r.status === 'Approved');
+        return filteredForRejected.filter(r => r.status === 'Approved');
     }
     if (filterStatus === 'all') {
-        return allUserRequests;
+        return allUserRequests; // Show all, including rejected for 'all' filter
     }
+    // Specific status filter like 'Rejected'
     return allUserRequests.filter(r => r.status === filterStatus);
   };
 
