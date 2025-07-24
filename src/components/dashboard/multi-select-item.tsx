@@ -10,8 +10,8 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
+  CommandItem,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -81,7 +81,7 @@ export function MultiSelectItem({
           <CommandInput placeholder="Search options..." />
           <CommandList>
             <CommandEmpty>No options found.</CommandEmpty>
-            <CommandGroup className="max-h-72 overflow-y-auto">
+            <CommandGroup className="max-h-60 overflow-y-auto">
               {options.map((option) => (
                 <CommandItem
                   key={option}

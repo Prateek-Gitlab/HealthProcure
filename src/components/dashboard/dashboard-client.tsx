@@ -12,6 +12,7 @@ import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
 import { PlaceholderChart } from "@/components/dashboard/placeholder-chart";
 import { StagedRequests } from "@/components/dashboard/staged-requests";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 
 interface DashboardClientProps {
@@ -135,7 +136,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const getTitle = () => {
     switch (filterStatus) {
         case 'pending':
-            if (user.role === 'base') return "My Pending Requests";
+            if (user.role === 'base') return "My Submitted Requests";
             return `Approval Queue`;
         case 'approved-by-me':
             return 'Approved Requests';
@@ -169,7 +170,10 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       )}
 
       {user.role === "base" && (
-        <StagedRequests onSubmit={handleSubmitStagedRequests} />
+        <>
+            <StagedRequests onSubmit={handleSubmitStagedRequests} />
+            <Separator />
+        </>
       )}
 
       <div className="flex items-center justify-between">

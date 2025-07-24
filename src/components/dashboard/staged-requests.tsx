@@ -21,7 +21,7 @@ import {
     SelectTrigger,
     SelectValue,
   } from "@/components/ui/select";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RequestForm } from "./request-form";
@@ -103,121 +103,131 @@ export function StagedRequests({ onSubmit }: StagedRequestsProps) {
 
   return (
     <>
-        <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold font-headline">New Requests</h2>
-        <Button onClick={() => setIsFormOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Add Items
-        </Button>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>New Requests</CardTitle>
+                    <CardDescription>Create and manage procurement requests before submission.</CardDescription>
+                </div>
+                <Button onClick={() => setIsFormOpen(true)}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Add Items
+                </Button>
+            </CardHeader>
+            
+            {stagedRequests.length > 0 && (
+                <CardContent>
+                <div className="overflow-x-auto">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                            <TableHead>Item Name</TableHead>
+                            <TableHead className="w-[120px]">Quantity</TableHead>
+                            <TableHead className="w-[150px]">Price/unit (₹)</TableHead>
+                            <TableHead className="w-[150px]">Priority</TableHead>
+                            <TableHead>Justification</TableHead>
+                            <TableHead className="w-[50px]"></TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {stagedRequests.map((req, index) => (
+                            <TableRow key={index}>
+                                <TableCell className="font-medium">{req.itemName}</TableCell>
+                                <TableCell>
+                                <Input
+                                    type="number"
+                                    value={req.quantity}
+                                    onChange={(e) =>
+                                    handleStagedRequestChange(index, "quantity", e.target.value)
+                                    }
+                                    className="w-full"
+                                    min="1"
+                                    disabled={isSubmitting}
+                                />
+                                </TableCell>
+                                <TableCell>
+                                <Input
+                                    type="number"
+                                    value={req.pricePerUnit}
+                                    onChange={(e) =>
+                                    handleStagedRequestChange(index, "pricePerUnit", e.target.value)
+                                    }
+                                    className="w-full"
+                                    min="0"
+                                    step="0.01"
+                                    disabled={isSubmitting}
+                                />
+                                </TableCell>
+                                <TableCell>
+                                    <Select 
+                                        value={req.priority} 
+                                        onValueChange={(value) => handleStagedRequestChange(index, "priority", value)}
+                                        disabled={isSubmitting}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Select priority" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {procurementPriorities.map(p => (
+                                                <SelectItem key={p} value={p}>{p}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </TableCell>
+                                <TableCell>
+                                <Textarea
+                                    value={req.justification}
+                                    onChange={(e) =>
+                                    handleStagedRequestChange(index, "justification", e.target.value)
+                                    }
+                                    placeholder="Enter justification..."
+                                    className="w-full"
+                                    disabled={isSubmitting}
+                                />
+                                </TableCell>
+                                <TableCell>
+                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveStagedRequest(index)} disabled={isSubmitting}>
+                                        <XCircle className="h-4 w-4 text-muted-foreground"/>
+                                    </Button>
+                                </TableCell>
+                            </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </div>
+                <div className="flex justify-end mt-4">
+                    <Button onClick={handleSubmitAllStaged} disabled={isSubmitting || stagedRequests.length === 0}>
+                    {isSubmitting ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Submitting...
+                        </>
+                    ) : (
+                        <>
+                            <Send className="mr-2 h-4 w-4" />
+                            Submit All Requests
+                        </>
+                    )}
+                    </Button>
+                </div>
+                </CardContent>
+            )}
+
+            {stagedRequests.length === 0 && (
+                 <CardContent>
+                    <div className="flex items-center justify-center h-40 border-2 border-dashed rounded-lg">
+                        <p className="text-muted-foreground">No items added yet. Click "Add Items" to start.</p>
+                    </div>
+                 </CardContent>
+            )}
+
+        </Card>
+
         <RequestForm
             isOpen={isFormOpen}
             onOpenChange={setIsFormOpen}
             onItemsSelected={handleItemsSelected}
         />
-        </div>
-
-        {stagedRequests.length > 0 && (
-        <Card>
-            <CardHeader>
-            <CardTitle>Selected Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-            <div className="overflow-x-auto">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                        <TableHead>Item Name</TableHead>
-                        <TableHead className="w-[120px]">Quantity</TableHead>
-                        <TableHead className="w-[150px]">Price/unit (₹)</TableHead>
-                        <TableHead className="w-[150px]">Priority</TableHead>
-                        <TableHead>Justification</TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {stagedRequests.map((req, index) => (
-                        <TableRow key={index}>
-                            <TableCell className="font-medium">{req.itemName}</TableCell>
-                            <TableCell>
-                            <Input
-                                type="number"
-                                value={req.quantity}
-                                onChange={(e) =>
-                                handleStagedRequestChange(index, "quantity", e.target.value)
-                                }
-                                className="w-full"
-                                min="1"
-                                disabled={isSubmitting}
-                            />
-                            </TableCell>
-                            <TableCell>
-                            <Input
-                                type="number"
-                                value={req.pricePerUnit}
-                                onChange={(e) =>
-                                handleStagedRequestChange(index, "pricePerUnit", e.target.value)
-                                }
-                                className="w-full"
-                                min="0"
-                                step="0.01"
-                                disabled={isSubmitting}
-                            />
-                            </TableCell>
-                            <TableCell>
-                                <Select 
-                                    value={req.priority} 
-                                    onValueChange={(value) => handleStagedRequestChange(index, "priority", value)}
-                                    disabled={isSubmitting}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select priority" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {procurementPriorities.map(p => (
-                                            <SelectItem key={p} value={p}>{p}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </TableCell>
-                            <TableCell>
-                            <Textarea
-                                value={req.justification}
-                                onChange={(e) =>
-                                handleStagedRequestChange(index, "justification", e.target.value)
-                                }
-                                placeholder="Enter justification..."
-                                className="w-full"
-                                disabled={isSubmitting}
-                            />
-                            </TableCell>
-                            <TableCell>
-                                <Button variant="ghost" size="icon" onClick={() => handleRemoveStagedRequest(index)} disabled={isSubmitting}>
-                                    <XCircle className="h-4 w-4 text-muted-foreground"/>
-                                </Button>
-                            </TableCell>
-                        </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
-            <div className="flex justify-end mt-4">
-                <Button onClick={handleSubmitAllStaged} disabled={isSubmitting || stagedRequests.length === 0}>
-                {isSubmitting ? (
-                    <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Submitting...
-                    </>
-                ) : (
-                    <>
-                        <Send className="mr-2 h-4 w-4" />
-                        Submit All Requests
-                    </>
-                )}
-                </Button>
-            </div>
-            </CardContent>
-        </Card>
-        )}
     </>
   );
 }
