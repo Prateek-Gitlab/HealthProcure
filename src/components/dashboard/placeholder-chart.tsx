@@ -10,6 +10,16 @@ interface PlaceholderChartProps {
 
 export function PlaceholderChart({ currentUser, totalApprovedBudget }: PlaceholderChartProps) {
 
+    const formatBudget = (amount: number) => {
+        if (amount >= 10000000) { // 1 Crore
+            return `${(amount / 10000000).toFixed(2)} Cr.`;
+        }
+        if (amount >= 100000) { // 1 Lakh
+            return `${(amount / 100000).toFixed(2)} Lacs`;
+        }
+        return amount.toLocaleString('en-IN');
+    };
+
     if (currentUser.role === 'state') {
         return (
             <Card>
@@ -24,7 +34,7 @@ export function PlaceholderChart({ currentUser, totalApprovedBudget }: Placehold
                         </div>
                         <p className="text-sm text-muted-foreground mb-1">Total Budget for Approved Requests</p>
                         <p className="text-4xl font-bold">
-                            {`₹${totalApprovedBudget.toLocaleString('en-IN')}`}
+                            {`₹${formatBudget(totalApprovedBudget)}`}
                         </p>
                     </div>
                 </CardContent>
