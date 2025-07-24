@@ -3,16 +3,8 @@
 "use client";
 
 import { useState } from "react";
-import type { ProcurementRequest, Priority, User, ProcurementCategory } from "@/lib/data";
+import type { ProcurementRequest, User } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Card,
   CardContent,
@@ -20,19 +12,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Eye, Check, X } from "lucide-react";
-import { RequestDetailsSheet } from "./request-details-sheet";
-import { ApprovalDialog } from "./approval-dialog";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { cn } from "@/lib/utils";
-
+import { RequestDetailsSheet } from "./request-details-sheet";
+import { ApprovalDialog } from "./approval-dialog";
+import { RequestTable } from "./request-table";
+import { groupRequestsForState, groupRequestsForTaluka, groupRequestsForDistrict } from "@/lib/grouping";
 
 interface RequestListProps {
   requests: ProcurementRequest[];
@@ -58,99 +47,6 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
     setIsApprovalOpen(true);
   };
   
-  const canApproveOrReject = (request: ProcurementRequest) => {
-    if (!user || user.role === 'base' || user.role === 'district' || user.role === 'state') return false;
-    if (user.role === 'taluka' && request.status === 'Pending Taluka Approval') return true;
-    return false;
-  }
-
-  const getStatusVariant = (status: ProcurementRequest["status"]): "default" | "secondary" | "destructive" | "outline" => {
-    switch (status) {
-      case "Approved":
-        return "default";
-      case "Rejected":
-        return "destructive";
-      case "Pending Taluka Approval":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
-
-  const getPriorityClass = (priority: Priority) => {
-    switch(priority) {
-      case 'High':
-        return 'bg-red-500 hover:bg-red-600';
-      case 'Medium':
-        return 'bg-yellow-500 hover:bg-yellow-600';
-      case 'Low':
-        return 'bg-blue-500 hover:bg-blue-600';
-      default:
-        return 'bg-gray-500 hover:bg-gray-600';
-    }
-  }
-
-  const renderRequestTable = (requestList: ProcurementRequest[]) => (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Request ID</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Item</TableHead>
-          <TableHead className="text-right">Quantity</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Priority</TableHead>
-          <TableHead className="text-right">Total Cost (₹)</TableHead>
-          <TableHead className="text-right">Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {requestList.map((request) => {
-          const totalCost = (request.pricePerUnit ?? 0) * request.quantity;
-          return (
-            <TableRow key={request.id}>
-              <TableCell className="font-medium">{request.id}</TableCell>
-              <TableCell>{request.category}</TableCell>
-              <TableCell>{request.itemName}</TableCell>
-              <TableCell className="text-right">{request.quantity.toLocaleString()}</TableCell>
-              <TableCell>
-                <Badge variant={getStatusVariant(request.status)}>
-                  {request.status}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                  <Badge className={cn("text-white", getPriorityClass(request.priority))}>
-                      {request.priority}
-                  </Badge>
-              </TableCell>
-              <TableCell className="text-right font-medium">
-                {totalCost.toLocaleString('en-IN')}
-              </TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button variant="outline" size="icon" onClick={() => handleViewDetails(request)}>
-                  <Eye className="h-4 w-4" />
-                  <span className="sr-only">View Details</span>
-                </Button>
-                {canApproveOrReject(request) && (
-                    <>
-                        <Button variant="outline" size="icon" className="text-green-600 hover:bg-green-100 hover:text-green-700 border-green-300" onClick={() => handleApprovalAction(request, "Approve")}>
-                            <Check className="h-4 w-4" />
-                            <span className="sr-only">Approve</span>
-                        </Button>
-                          <Button variant="outline" size="icon" className="text-red-600 hover:bg-red-100 hover:text-red-700 border-red-300" onClick={() => handleApprovalAction(request, "Reject")}>
-                            <X className="h-4 w-4" />
-                            <span className="sr-only">Reject</span>
-                        </Button>
-                    </>
-                )}
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
-  );
-
   if (requests.length === 0) {
     return (
       <Card className="flex flex-col items-center justify-center py-20">
@@ -168,34 +64,10 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
   }
   
   const renderGroupedView = () => {
-    if (user?.role === 'state') {
-        const getUserById = (id: string) => allUsers.find(u => u.id === id);
-        
-        const getHierarchy = (userId: string): User[] => {
-            const user = getUserById(userId);
-            if (!user) return [];
-            if (!user.reportsTo) return [user];
-            return [...getHierarchy(user.reportsTo), user];
-        };
+    if (!user) return null;
 
-        const groupedByDistrict = requests.reduce((acc, request) => {
-            const submittedByUser = getUserById(request.submittedBy);
-            if (!submittedByUser || submittedByUser.role !== 'base') return acc;
-            
-            const hierarchy = getHierarchy(submittedByUser.id);
-            const talukaUser = hierarchy.find(u => u.role === 'taluka');
-            const districtUser = hierarchy.find(u => u.role === 'district');
-            
-            if (!districtUser || !talukaUser) return acc;
-            
-            if (!acc[districtUser.name]) acc[districtUser.name] = {};
-            if (!acc[districtUser.name][talukaUser.name]) acc[districtUser.name][talukaUser.name] = {};
-            if (!acc[districtUser.name][talukaUser.name][submittedByUser.name]) acc[districtUser.name][talukaUser.name][submittedByUser.name] = [];
-            
-            acc[districtUser.name][talukaUser.name][submittedByUser.name].push(request);
-            
-            return acc;
-        }, {} as Record<string, Record<string, Record<string, ProcurementRequest[]>>>);
+    if (user.role === 'state') {
+        const groupedByDistrict = groupRequestsForState(requests, allUsers);
 
         return (
             <Accordion type="multiple" className="w-full space-y-4">
@@ -220,7 +92,11 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
                                                                 {baseName} ({baseRequests.length} requests)
                                                             </AccordionTrigger>
                                                             <AccordionContent className="p-0">
-                                                                {renderRequestTable(baseRequests)}
+                                                                <RequestTable 
+                                                                    requests={baseRequests} 
+                                                                    onViewDetails={handleViewDetails}
+                                                                    onApprovalAction={handleApprovalAction}
+                                                                />
                                                             </AccordionContent>
                                                         </AccordionItem>
                                                     ))}
@@ -237,95 +113,60 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
         );
     }
 
-    if (user?.role === 'taluka') {
-      const groupedByFacility = requests.reduce((acc, request) => {
-        const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
-        if (!submittedByUser) return acc;
+    if (user.role === 'taluka') {
+        const groupedByFacility = groupRequestsForTaluka(requests, allUsers);
   
-        const facilityName = submittedByUser.name;
-        if (!acc[facilityName]) {
-          acc[facilityName] = {};
-        }
-  
-        const category = request.category;
-        if (!acc[facilityName][category]) {
-          acc[facilityName][category] = [];
-        }
-        acc[facilityName][category].push(request);
-        return acc;
-      }, {} as Record<string, Record<string, ProcurementRequest[]>>);
-  
-      const facilityNames = Object.keys(groupedByFacility).sort();
-
-      return (
-        <Accordion type="multiple" className="w-full space-y-4">
-          {facilityNames.map(facilityName => (
-            <AccordionItem value={facilityName} key={facilityName} className="border-b-0">
-               <Card>
-                  <AccordionTrigger className="p-6 text-lg font-semibold hover:no-underline">
-                    {facilityName} ({Object.values(groupedByFacility[facilityName]).flat().length} requests)
-                  </AccordionTrigger>
-                  <AccordionContent className="px-6 pb-6">
-                    <Accordion type="multiple" className="w-full space-y-2">
-                      {Object.keys(groupedByFacility[facilityName]).map(category => (
-                        <AccordionItem value={category} key={category} className="border rounded-md">
-                          <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
-                              {category} ({groupedByFacility[facilityName][category].length} requests)
-                          </AccordionTrigger>
-                          <AccordionContent className="p-0 border-t">
-                              {renderRequestTable(groupedByFacility[facilityName][category])}
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
-                  </AccordionContent>
-                </Card>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      );
+        return (
+            <Accordion type="multiple" className="w-full space-y-4">
+            {Object.entries(groupedByFacility).map(([facilityName, categories]) => (
+                <AccordionItem value={facilityName} key={facilityName} className="border-b-0">
+                <Card>
+                    <AccordionTrigger className="p-6 text-lg font-semibold hover:no-underline">
+                        {facilityName} ({Object.values(categories).flat().length} requests)
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-6">
+                        <Accordion type="multiple" className="w-full space-y-2">
+                        {Object.entries(categories).map(([category, categoryRequests]) => (
+                            <AccordionItem value={category} key={category} className="border rounded-md">
+                            <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
+                                {category} ({categoryRequests.length} requests)
+                            </AccordionTrigger>
+                            <AccordionContent className="p-0 border-t">
+                                <RequestTable 
+                                    requests={categoryRequests} 
+                                    onViewDetails={handleViewDetails}
+                                    onApprovalAction={handleApprovalAction}
+                                />
+                            </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                        </Accordion>
+                    </AccordionContent>
+                    </Card>
+                </AccordionItem>
+            ))}
+            </Accordion>
+        );
     }
     
     // Default grouping for district users
-    const groupedRequests = requests.reduce((acc, request) => {
-      const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
-  
-      let facilityName = 'My Requests';
-      let facilityUser: User | undefined;
-  
-      if (user?.role === 'district') {
-        if (request.status === 'Pending Taluka Approval' && submittedByUser?.role === 'base') {
-          facilityUser = allUsers.find(u => u.id === submittedByUser.reportsTo);
-          facilityName = facilityUser?.name || 'Unknown Taluka';
-        } else if (submittedByUser) {
-          facilityUser = allUsers.find(u => u.id === submittedByUser.reportsTo);
-          facilityName = allUsers.find(u => u.id === submittedByUser.id)?.name || 'Unknown';
-        }
-      } else {
-        facilityUser = submittedByUser;
-        facilityName = facilityUser?.name || 'My Requests';
-      }
-      
-      if (!acc[facilityName]) {
-        acc[facilityName] = [];
-      }
-      acc[facilityName].push(request);
-      return acc;
-    }, {} as Record<string, ProcurementRequest[]>);
-  
-    const facilityNames = Object.keys(groupedRequests).sort();
+    const groupedRequests = groupRequestsForDistrict(requests, allUsers, user);
   
     return (
       <Accordion type="multiple" className="w-full space-y-4">
-        {facilityNames.map(facilityName => (
+        {Object.entries(groupedRequests).map(([facilityName, facilityRequests]) => (
           <AccordionItem value={facilityName} key={facilityName} className="border-b-0">
              <Card>
                 <AccordionTrigger className="p-6 text-lg font-semibold hover:no-underline">
-                    {facilityName} ({groupedRequests[facilityName].length} requests)
+                    {facilityName} ({facilityRequests.length} requests)
                 </AccordionTrigger>
                 <AccordionContent className="p-0">
                   <CardContent className="p-0">
-                    {renderRequestTable(groupedRequests[facilityName])}
+                    <RequestTable 
+                        requests={facilityRequests} 
+                        onViewDetails={handleViewDetails}
+                        onApprovalAction={handleApprovalAction}
+                    />
                   </CardContent>
                 </AccordionContent>
               </Card>
@@ -343,7 +184,11 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
       ) : (
         <Card>
           <CardContent className="p-0">
-            {renderRequestTable(requests)}
+            <RequestTable 
+                requests={requests}
+                onViewDetails={handleViewDetails}
+                onApprovalAction={handleApprovalAction}
+            />
           </CardContent>
         </Card>
       )}
@@ -368,4 +213,3 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
     </>
   );
 }
-

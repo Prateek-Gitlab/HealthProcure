@@ -1,61 +1,28 @@
 
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import type { ProcurementRequest, ProcurementCategory, RequestStatus, Priority, User } from "@/lib/data";
+import { useState, useMemo } from "react";
+import type { ProcurementRequest, RequestStatus, StagedRequest, FilterStatus } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
+import { useHierarchy } from "@/hooks/use-hierarchy";
 import { addRequest } from "@/lib/actions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RequestList } from "@/components/dashboard/request-list";
-import { RequestForm } from "@/components/dashboard/request-form";
 import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
 import { PlaceholderChart } from "@/components/dashboard/placeholder-chart";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, Send, XCircle, Loader2 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { StagedRequests } from "@/components/dashboard/staged-requests";
 import { useToast } from "@/hooks/use-toast";
-import { procurementPriorities } from "@/lib/data";
+
 
 interface DashboardClientProps {
   initialRequests: ProcurementRequest[];
 }
 
-interface StagedRequest {
-  itemName: string;
-  category: ProcurementCategory;
-  quantity: number;
-  pricePerUnit: number;
-  priority: Priority;
-  justification: string;
-}
-
-type FilterStatus = RequestStatus | 'all' | 'pending' | 'approved-by-me';
-
-
 export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const { user, allUsers } = useAuth();
+  const { getSubordinateIds } = useHierarchy();
   const [requests, setRequests] = useState<ProcurementRequest[]>(initialRequests);
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [stagedRequests, setStagedRequests] = useState<StagedRequest[]>([]);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   const totalApprovedBudget = useMemo(() => {
@@ -76,73 +43,15 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     );
   };
 
-  const handleItemsSelected = (
-    items: string[],
-    category: ProcurementCategory
-  ) => {
-    const newStagedRequests: StagedRequest[] = items.map((itemName) => ({
-      itemName,
-      category,
-      quantity: 1,
-      pricePerUnit: 0,
-      priority: "Medium",
-      justification: "",
-    }));
-
-    // Filter out duplicates
-    const combined = [...stagedRequests, ...newStagedRequests];
-    const unique = combined.filter(
-      (v, i, a) => a.findIndex((t) => t.itemName === v.itemName) === i
-    );
-
-    setStagedRequests(unique);
-    setIsFormOpen(false);
-  };
-
-  const handleStagedRequestChange = (
-    index: number,
-    field: "quantity" | "justification" | "priority" | "pricePerUnit",
-    value: string | number
-  ) => {
-    const updated = [...stagedRequests];
-    if (field === "quantity" || field === "pricePerUnit") {
-      updated[index][field] = Number(value);
-    } else if (field === 'priority') {
-      updated[index].priority = value as Priority;
-    }
-     else {
-      updated[index].justification = String(value);
-    }
-    setStagedRequests(updated);
-  };
-  
-  const handleRemoveStagedRequest = (index: number) => {
-    const updated = stagedRequests.filter((_, i) => i !== index);
-    setStagedRequests(updated);
-  }
-
-  const handleSubmitAllStaged = async () => {
+  const handleSubmitStagedRequests = async (stagedRequests: StagedRequest[]) => {
     if (!user) return;
-
-    const validRequests = stagedRequests.filter(req => req.quantity > 0 && req.justification.trim().length > 0 && req.pricePerUnit >= 0);
     
-    if (validRequests.length !== stagedRequests.length) {
-        toast({
-            title: "Validation Error",
-            description: "Please ensure all selected items have a quantity, justification and a valid price.",
-            variant: "destructive",
-        });
-        return;
-    }
-    
-    setIsSubmitting(true);
     try {
-        const addedRequestsPromises = validRequests.map((req) =>
+        const addedRequestsPromises = stagedRequests.map((req) =>
             addRequest(req, user.id)
         );
         const addedRequests = await Promise.all(addedRequestsPromises);
 
-        // Filter out any nulls in case the action returns nothing on error
         const successfulRequests = addedRequests.filter(r => r) as ProcurementRequest[];
         
         setRequests(currentRequests => [...currentRequests, ...successfulRequests]);
@@ -152,28 +61,16 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
             description: `${successfulRequests.length} requests have been successfully submitted.`,
         });
 
-        setStagedRequests([]);
+        return true;
     } catch (error) {
         toast({
             title: "Submission Error",
             description: "An unexpected error occurred while submitting requests.",
             variant: "destructive",
         });
-    } finally {
-        setIsSubmitting(false);
+        return false;
     }
   };
-
-  const getSubordinateIds = useCallback((managerId: string): string[] => {
-    const directSubordinates = allUsers.filter(u => u.reportsTo === managerId);
-    let allSubordinateIds = directSubordinates.map(u => u.id);
-    
-    directSubordinates.forEach(subordinate => {
-        allSubordinateIds = [...allSubordinateIds, ...getSubordinateIds(subordinate.id)];
-    });
-
-    return allSubordinateIds;
-  }, [allUsers]);
 
   const allUserRequests = useMemo(() => {
     if (!user) return [];
@@ -194,7 +91,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       // Other roles see requests submitted by their subordinates
       return allVisibleUserIds.includes(r.submittedBy);
     });
-  }, [requests, user, allUsers, getSubordinateIds]);
+  }, [requests, user, getSubordinateIds]);
   
   const visibleRequests = () => {
     const filteredForRejected = user.role === 'district' || user.role === 'state' 
@@ -272,123 +169,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       )}
 
       {user.role === "base" && (
-        <>
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold font-headline">New Requests</h2>
-            <Button onClick={() => setIsFormOpen(true)}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Add Items
-            </Button>
-            <RequestForm
-              isOpen={isFormOpen}
-              onOpenChange={setIsFormOpen}
-              onItemsSelected={handleItemsSelected}
-            />
-          </div>
-
-          {stagedRequests.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Selected Items</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                            <TableHead>Item Name</TableHead>
-                            <TableHead className="w-[120px]">Quantity</TableHead>
-                            <TableHead className="w-[150px]">Price/unit (₹)</TableHead>
-                            <TableHead className="w-[150px]">Priority</TableHead>
-                            <TableHead>Justification</TableHead>
-                            <TableHead className="w-[50px]"></TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {stagedRequests.map((req, index) => (
-                            <TableRow key={index}>
-                                <TableCell className="font-medium">{req.itemName}</TableCell>
-                                <TableCell>
-                                <Input
-                                    type="number"
-                                    value={req.quantity}
-                                    onChange={(e) =>
-                                    handleStagedRequestChange(index, "quantity", e.target.value)
-                                    }
-                                    className="w-full"
-                                    min="1"
-                                    disabled={isSubmitting}
-                                />
-                                </TableCell>
-                                <TableCell>
-                                <Input
-                                    type="number"
-                                    value={req.pricePerUnit}
-                                    onChange={(e) =>
-                                    handleStagedRequestChange(index, "pricePerUnit", e.target.value)
-                                    }
-                                    className="w-full"
-                                    min="0"
-                                    step="0.01"
-                                    disabled={isSubmitting}
-                                />
-                                </TableCell>
-                                <TableCell>
-                                    <Select 
-                                        value={req.priority} 
-                                        onValueChange={(value) => handleStagedRequestChange(index, "priority", value)}
-                                        disabled={isSubmitting}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select priority" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {procurementPriorities.map(p => (
-                                                <SelectItem key={p} value={p}>{p}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </TableCell>
-                                <TableCell>
-                                <Textarea
-                                    value={req.justification}
-                                    onChange={(e) =>
-                                    handleStagedRequestChange(index, "justification", e.target.value)
-                                    }
-                                    placeholder="Enter justification..."
-                                    className="w-full"
-                                    disabled={isSubmitting}
-                                />
-                                </TableCell>
-                                <TableCell>
-                                    <Button variant="ghost" size="icon" onClick={() => handleRemoveStagedRequest(index)} disabled={isSubmitting}>
-                                        <XCircle className="h-4 w-4 text-muted-foreground"/>
-                                    </Button>
-                                </TableCell>
-                            </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </div>
-                <div className="flex justify-end mt-4">
-                  <Button onClick={handleSubmitAllStaged} disabled={isSubmitting || stagedRequests.length === 0}>
-                    {isSubmitting ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Submitting...
-                        </>
-                    ) : (
-                        <>
-                            <Send className="mr-2 h-4 w-4" />
-                            Submit All Requests
-                        </>
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </>
+        <StagedRequests onSubmit={handleSubmitStagedRequests} />
       )}
 
       <div className="flex items-center justify-between">

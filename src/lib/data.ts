@@ -1,4 +1,5 @@
 
+
 import { getRequests, getUsers } from "./sheets";
 
 export type Role = 'base' | 'taluka' | 'district' | 'state';
@@ -41,6 +42,17 @@ export interface ProcurementRequest {
   createdAt: string;
   auditLog: AuditLogEntry[];
 }
+
+export interface StagedRequest {
+  itemName: string;
+  category: ProcurementCategory;
+  quantity: number;
+  pricePerUnit: number;
+  priority: Priority;
+  justification: string;
+}
+
+export type FilterStatus = RequestStatus | 'all' | 'pending' | 'approved-by-me';
 
 export async function getAllUsers(): Promise<User[]> {
     return getUsers();
