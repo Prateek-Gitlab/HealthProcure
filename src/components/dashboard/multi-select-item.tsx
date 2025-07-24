@@ -7,8 +7,11 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
+  CommandEmpty,
+  CommandGroup,
   CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -16,7 +19,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface MultiSelectItemProps {
   options: string[];
@@ -77,29 +79,26 @@ export function MultiSelectItem({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder="Search options..." />
-          <ScrollArea className="h-72">
-            <div className="p-1">
-            {options.length > 0 ? (
-                options.map((option) => (
+          <CommandList>
+            <CommandEmpty>No options found.</CommandEmpty>
+            <CommandGroup className="max-h-72 overflow-y-auto">
+              {options.map((option) => (
                 <CommandItem
-                    key={option}
-                    onSelect={() => handleSelect(option)}
-                    className="cursor-pointer"
+                  key={option}
+                  onSelect={() => handleSelect(option)}
+                  className="cursor-pointer"
                 >
-                    <Check
+                  <Check
                     className={cn(
-                        "mr-2 h-4 w-4",
-                        selected.includes(option) ? "opacity-100" : "opacity-0"
+                      "mr-2 h-4 w-4",
+                      selected.includes(option) ? "opacity-100" : "opacity-0"
                     )}
-                    />
-                    {option}
+                  />
+                  {option}
                 </CommandItem>
-                ))
-            ) : (
-                <div className="py-6 text-center text-sm">No options found.</div>
-            )}
-            </div>
-          </ScrollArea>
+              ))}
+            </CommandGroup>
+          </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
