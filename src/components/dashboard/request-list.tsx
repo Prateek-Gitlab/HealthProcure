@@ -168,7 +168,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
   }
   
   const renderGroupedView = () => {
-    if (user?.role === 'state' && isFiltered) {
+    if (user?.role === 'state') {
         const getUserById = (id: string) => allUsers.find(u => u.id === id);
         
         const getHierarchy = (userId: string): User[] => {
@@ -286,14 +286,14 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
       );
     }
     
-    // Default grouping for district and state users (when not filtered)
+    // Default grouping for district users
     const groupedRequests = requests.reduce((acc, request) => {
       const submittedByUser = allUsers.find(u => u.id === request.submittedBy);
   
       let facilityName = 'My Requests';
       let facilityUser: User | undefined;
   
-      if (user?.role === 'district' || user?.role === 'state') {
+      if (user?.role === 'district') {
         if (request.status === 'Pending Taluka Approval' && submittedByUser?.role === 'base') {
           facilityUser = allUsers.find(u => u.id === submittedByUser.reportsTo);
           facilityName = facilityUser?.name || 'Unknown Taluka';
@@ -338,7 +338,7 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
 
   return (
     <>
-      {user && (user.role === 'district' || user.role === 'state' || user.role === 'taluka') ? (
+      {user && (user.role === 'state' || user.role === 'district' || user.role === 'taluka') ? (
         renderGroupedView()
       ) : (
         <Card>
@@ -368,3 +368,4 @@ export function RequestList({ requests, onUpdate, isFiltered = false }: RequestL
     </>
   );
 }
+
