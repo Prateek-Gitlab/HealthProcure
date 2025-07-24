@@ -7,11 +7,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
-  CommandEmpty,
   CommandInput,
   CommandItem,
-  CommandList,
-  CommandGroup,
 } from "@/components/ui/command";
 import {
   Popover,
@@ -80,28 +77,29 @@ export function MultiSelectItem({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
         <Command>
           <CommandInput placeholder="Search options..." />
-          <CommandList>
-            <CommandEmpty>No options found.</CommandEmpty>
-            <CommandGroup>
-              <ScrollArea className="h-72">
-                {options.map((option) => (
-                  <CommandItem
+          <ScrollArea className="h-72">
+            <div className="p-1">
+            {options.length > 0 ? (
+                options.map((option) => (
+                <CommandItem
                     key={option}
                     onSelect={() => handleSelect(option)}
                     className="cursor-pointer"
-                  >
+                >
                     <Check
-                      className={cn(
+                    className={cn(
                         "mr-2 h-4 w-4",
                         selected.includes(option) ? "opacity-100" : "opacity-0"
-                      )}
+                    )}
                     />
                     {option}
-                  </CommandItem>
-                ))}
-              </ScrollArea>
-            </CommandGroup>
-          </CommandList>
+                </CommandItem>
+                ))
+            ) : (
+                <div className="py-6 text-center text-sm">No options found.</div>
+            )}
+            </div>
+          </ScrollArea>
         </Command>
       </PopoverContent>
     </Popover>
