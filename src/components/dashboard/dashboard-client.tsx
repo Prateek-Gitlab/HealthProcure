@@ -9,6 +9,7 @@ import { addRequest } from "@/lib/actions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RequestList } from "@/components/dashboard/request-list";
 import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
+import { ApprovedItemsTable } from "@/components/dashboard/approved-items-table";
 import { PlaceholderChart } from "@/components/dashboard/placeholder-chart";
 import { StagedRequests } from "@/components/dashboard/staged-requests";
 import { useToast } from "@/hooks/use-toast";
@@ -162,10 +163,14 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       {(user.role === 'district' || user.role === 'state') && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             <AnalyticsChart requests={requests} allUsers={allUsers} currentUser={user} />
-            <PlaceholderChart 
-              currentUser={user}
-              totalApprovedBudget={totalApprovedBudget}
-            />
+            {user.role === 'district' ? (
+                <ApprovedItemsTable requests={requests} currentUser={user} />
+            ) : (
+                <PlaceholderChart 
+                currentUser={user}
+                totalApprovedBudget={totalApprovedBudget}
+                />
+            )}
         </div>
       )}
 
