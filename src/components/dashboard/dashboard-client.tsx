@@ -10,10 +10,10 @@ import { StatsCards } from "@/components/dashboard/stats-cards";
 import { RequestList } from "@/components/dashboard/request-list";
 import { AnalyticsChart } from "@/components/dashboard/analytics-chart";
 import { ApprovedItemsTable } from "@/components/dashboard/approved-items-table";
-import { PlaceholderChart } from "@/components/dashboard/placeholder-chart";
 import { StagedRequests } from "@/components/dashboard/staged-requests";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { CategoryPieChart } from "./category-pie-chart";
 
 
 interface DashboardClientProps {
@@ -166,10 +166,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
             {user.role === 'district' ? (
                 <ApprovedItemsTable requests={requests} currentUser={user} />
             ) : (
-                <PlaceholderChart 
-                currentUser={user}
-                totalApprovedBudget={totalApprovedBudget}
-                />
+                <CategoryPieChart requests={requests} />
             )}
         </div>
       )}

@@ -80,7 +80,7 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
       <CardHeader>
         <CardTitle>Approved Items Summary</CardTitle>
         <CardDescription>
-          A summary of all approved items within your district, grouped by category.
+          A summary of all approved items within the district
         </CardDescription>
       </CardHeader>
       <CardContent>
