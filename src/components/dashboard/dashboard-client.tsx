@@ -220,25 +220,19 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
       {user.role === 'state' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="flex flex-col gap-6">
-                <AnalyticsChart 
-                    requests={requests} 
-                    allUsers={allUsers} 
-                    currentUser={user} 
-                    selectedFilterId={analyticsFilterId}
-                    onFilterChange={setAnalyticsFilterId}
-                />
-            </div>
-            <div className="flex flex-col gap-6">
-                <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
-                <CategoryPieChart 
-                    requests={pieChartRequests} 
-                    {...getPieChartTitleAndDescription()}
-                />
-            </div>
-             <div className="lg:col-span-2">
-                <ApprovedItemsTable requests={requests} currentUser={user} />
-             </div>
+            <AnalyticsChart 
+                requests={requests} 
+                allUsers={allUsers} 
+                currentUser={user} 
+                selectedFilterId={analyticsFilterId}
+                onFilterChange={setAnalyticsFilterId}
+            />
+            <CategoryPieChart 
+                requests={pieChartRequests} 
+                {...getPieChartTitleAndDescription()}
+            />
+            <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
+            <ApprovedItemsTable requests={requests} currentUser={user} />
         </div>
       )}
 
