@@ -68,7 +68,7 @@ export function RequestTable({ requests, onViewDetails, onApprovalAction }: Requ
           <TableHead className="text-right">Quantity</TableHead>
           <TableHead>Status</TableHead>
           <TableHead>Priority</TableHead>
-          <TableHead className="text-right">Total Cost (₹)</TableHead>
+          <TableHead className="text-right">Estimated Cost (₹)</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
       </TableHeader>

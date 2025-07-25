@@ -98,7 +98,7 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
                                         <TableRow>
                                             <TableHead>Item</TableHead>
                                             <TableHead className="text-right">Total Quantity</TableHead>
-                                            <TableHead className="text-right">Total Cost (₹)</TableHead>
+                                            <TableHead className="text-right">Estimated Cost (₹)</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
