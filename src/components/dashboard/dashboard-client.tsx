@@ -206,7 +206,8 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       />
 
       {(user.role === 'district' || user.role === 'state') && (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+          <div className="xl:col-span-3 space-y-6">
             <AnalyticsChart 
                 requests={requests} 
                 allUsers={allUsers} 
@@ -214,17 +215,23 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                 selectedFilterId={analyticsFilterId}
                 onFilterChange={setAnalyticsFilterId}
             />
-            {user.role === 'district' ? (
+             {user.role === 'state' && (
                 <ApprovedItemsTable requests={requests} currentUser={user} />
-            ) : (
-                <div className="space-y-6">
-                    <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
-                    <CategoryPieChart 
-                        requests={pieChartRequests} 
-                        {...getPieChartTitleAndDescription()}
-                    />
-                </div>
-            )}
+             )}
+          </div>
+          <div className="xl:col-span-2 space-y-6">
+              {user.role === 'district' ? (
+                  <ApprovedItemsTable requests={requests} currentUser={user} />
+              ) : (
+                <>
+                  <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
+                  <CategoryPieChart 
+                      requests={pieChartRequests} 
+                      {...getPieChartTitleAndDescription()}
+                  />
+                </>
+              )}
+          </div>
         </div>
       )}
 

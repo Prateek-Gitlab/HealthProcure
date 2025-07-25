@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo } from 'react';
-import type { ProcurementRequest, User, ProcurementCategory } from '@/lib/data';
+import type { ProcurementRequest, User, ProcurementCategory, Role } from '@/lib/data';
 import { useHierarchy } from '@/hooks/use-hierarchy';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -21,6 +21,20 @@ interface AggregatedItem {
 }
 
 type AggregatedData = Record<ProcurementCategory, AggregatedItem[]>;
+
+const getTitleAndDescription = (role: Role) => {
+    if (role === 'state') {
+        return {
+            title: "State-wide Approved Items",
+            description: "A summary of all approved items across the entire state."
+        }
+    }
+    // Default to District
+    return {
+        title: "Approved Items Summary",
+        description: "A summary of all approved items within the district"
+    }
+}
 
 export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTableProps) {
   const { getSubordinateIds } = useHierarchy();
@@ -75,12 +89,14 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
 
   const aggregatedCategories = Object.keys(aggregatedData) as ProcurementCategory[];
 
+  const { title, description } = getTitleAndDescription(currentUser.role);
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Approved Items Summary</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <CardDescription>
-          A summary of all approved items within the district
+          {description}
         </CardDescription>
       </CardHeader>
       <CardContent>
