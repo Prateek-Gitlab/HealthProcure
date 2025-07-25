@@ -22,13 +22,13 @@ export function PlaceholderChart({ currentUser, totalApprovedBudget }: Placehold
 
     if (currentUser.role === 'state') {
         return (
-            <Card>
+            <Card className="flex flex-col h-full">
                 <CardHeader>
                     <CardTitle>Budget Overview</CardTitle>
                     <CardDescription>Total budgetary outlay required based on approved requests</CardDescription>
                 </CardHeader>
-                <CardContent>
-                    <div className="flex flex-col items-center justify-center h-[300px] bg-secondary rounded-md p-6">
+                <CardContent className="flex-1 flex flex-col items-center justify-center">
+                    <div className="flex flex-col items-center justify-center h-full w-full bg-secondary rounded-md p-6">
                         <div className="flex items-center justify-center bg-primary/10 text-primary p-4 rounded-full mb-4">
                             <IndianRupee className="w-12 h-12" />
                         </div>

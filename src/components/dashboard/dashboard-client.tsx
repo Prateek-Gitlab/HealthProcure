@@ -205,9 +205,9 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         onFilterChange={setFilterStatus}
       />
 
-      {(user.role === 'district' || user.role === 'state') && (
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
-          <div className="xl:col-span-3 space-y-6">
+      {user.role === 'district' && (
+         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <ApprovedItemsTable requests={requests} currentUser={user} />
             <AnalyticsChart 
                 requests={requests} 
                 allUsers={allUsers} 
@@ -215,23 +215,30 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                 selectedFilterId={analyticsFilterId}
                 onFilterChange={setAnalyticsFilterId}
             />
-             {user.role === 'state' && (
+         </div>
+      )}
+
+      {user.role === 'state' && (
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <div className="lg:col-span-3 flex flex-col gap-6">
+                <AnalyticsChart 
+                    requests={requests} 
+                    allUsers={allUsers} 
+                    currentUser={user} 
+                    selectedFilterId={analyticsFilterId}
+                    onFilterChange={setAnalyticsFilterId}
+                />
+            </div>
+            <div className="lg:col-span-2 flex flex-col gap-6">
+                <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
+                <CategoryPieChart 
+                    requests={pieChartRequests} 
+                    {...getPieChartTitleAndDescription()}
+                />
+            </div>
+             <div className="lg:col-span-5">
                 <ApprovedItemsTable requests={requests} currentUser={user} />
-             )}
-          </div>
-          <div className="xl:col-span-2 space-y-6">
-              {user.role === 'district' ? (
-                  <ApprovedItemsTable requests={requests} currentUser={user} />
-              ) : (
-                <>
-                  <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
-                  <CategoryPieChart 
-                      requests={pieChartRequests} 
-                      {...getPieChartTitleAndDescription()}
-                  />
-                </>
-              )}
-          </div>
+             </div>
         </div>
       )}
 

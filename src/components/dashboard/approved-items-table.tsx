@@ -92,15 +92,15 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
   const { title, description } = getTitleAndDescription(currentUser.role);
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
           {description}
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-96">
+      <CardContent className="flex-1">
+        <ScrollArea className="h-full max-h-96">
             {aggregatedCategories.length > 0 ? (
                 <Accordion type="multiple" className="w-full space-y-2">
                     {aggregatedCategories.map(category => (

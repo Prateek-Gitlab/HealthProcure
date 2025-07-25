@@ -147,7 +147,7 @@ export function AnalyticsChart({ requests, allUsers, currentUser, selectedFilter
     : (isStateUser ? "District" : "Taluka");
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
@@ -184,10 +184,10 @@ export function AnalyticsChart({ requests, allUsers, currentUser, selectedFilter
             </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex items-center justify-center">
         {chartData.length > 0 ? (
-          <div className="w-full">
-            <ResponsiveContainer width="100%" height={350}>
+          <div className="w-full h-full min-h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
                 <XAxis
                   dataKey="name"
@@ -213,7 +213,7 @@ export function AnalyticsChart({ requests, allUsers, currentUser, selectedFilter
             </ResponsiveContainer>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-[350px]">
+          <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">No approved requests match the selected filters.</p>
           </div>
         )}

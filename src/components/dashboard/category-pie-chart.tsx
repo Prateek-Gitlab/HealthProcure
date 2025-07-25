@@ -44,16 +44,16 @@ export function CategoryPieChart({
   }, [requests]);
 
   return (
-    <Card>
+    <Card className="flex flex-col h-full">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>
           {description}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1 flex items-center justify-center">
         {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={250}>
+          <ResponsiveContainer width="100%" height="100%" min-height="250px">
             <PieChart>
               <Pie
                 data={chartData}
@@ -76,7 +76,7 @@ export function CategoryPieChart({
             </PieChart>
           </ResponsiveContainer>
         ) : (
-          <div className="flex items-center justify-center h-[250px]">
+          <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">No approved requests with costs to display.</p>
           </div>
         )}
