@@ -104,7 +104,7 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
             .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
           
           return { name: category, totalCost: categoryCost };
-        });
+        }).filter(d => d.totalCost > 0);
       }
     }
   }, [requests, allUsers, currentUser, selectedCategory, selectedFilterId, subordinateDistricts, subordinateTalukas, isStateUser]);
@@ -136,6 +136,8 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
     }
     return 'Total cost of approved requests by Taluka.';
   }
+
+  const chartXAxisLabel = isSingleTalukaViewForDistrictUser ? "Category" : (isStateUser && isSingleEntityView ? "Taluka" : (isStateUser ? "District" : "Taluka"));
 
   return (
     <Card>
