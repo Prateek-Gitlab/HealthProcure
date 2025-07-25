@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { ProcurementRequest, RequestStatus, StagedRequest, FilterStatus } from "@/lib/data";
+import type { ProcurementRequest, RequestStatus, StagedRequest, FilterStatus, Priority } from "@/lib/data";
 import { useAuth } from "@/contexts/auth-context";
 import { useHierarchy } from "@/hooks/use-hierarchy";
 import { addRequest } from "@/lib/actions";
@@ -100,38 +100,51 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         ? allUserRequests.filter(r => r.status !== 'Rejected') 
         : allUserRequests;
 
+    let filteredRequests: ProcurementRequest[];
+
     if (filterStatus === 'pending') {
         switch (user.role) {
           case "state":
           case "district":
-            return filteredForRejected.filter(
+            filteredRequests = filteredForRejected.filter(
               (r) => r.status === "Pending Taluka Approval"
             );
+            break;
           case "taluka":
-            return filteredForRejected.filter(
+            filteredRequests = filteredForRejected.filter(
               (r) => r.status === "Pending Taluka Approval"
             );
+            break;
           case "base":
-            return filteredForRejected.filter((r) => r.status.startsWith('Pending'));
+            filteredRequests = filteredForRejected.filter((r) => r.status.startsWith('Pending'));
+            break;
           default:
-            return [];
+            filteredRequests = [];
         }
-    }
-    if (filterStatus === 'approved-by-me') {
+    } else if (filterStatus === 'approved-by-me') {
        if (user.role === 'taluka') {
-          return filteredForRejected.filter(r => r.status === 'Approved');
-        }
-        if (user.role === 'district') {
-          return filteredForRejected.filter(r => r.status === 'Approved');
+          filteredRequests = filteredForRejected.filter(r => r.status === 'Approved');
+        } else if (user.role === 'district') {
+          filteredRequests = filteredForRejected.filter(r => r.status === 'Approved');
         }
         // For state and base users, this is just final approved
-        return filteredForRejected.filter(r => r.status === 'Approved');
+        else {
+          filteredRequests = filteredForRejected.filter(r => r.status === 'Approved');
+        }
+    } else if (filterStatus === 'all') {
+        filteredRequests = allUserRequests; // Show all, including rejected for 'all' filter
+    } else {
+      // Specific status filter like 'Rejected'
+      filteredRequests = allUserRequests.filter(r => r.status === filterStatus);
     }
-    if (filterStatus === 'all') {
-        return allUserRequests; // Show all, including rejected for 'all' filter
-    }
-    // Specific status filter like 'Rejected'
-    return allUserRequests.filter(r => r.status === filterStatus);
+
+    const priorityOrder: Record<Priority, number> = {
+      'High': 1,
+      'Medium': 2,
+      'Low': 3
+    };
+
+    return filteredRequests.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
   };
 
   const getTitle = () => {
