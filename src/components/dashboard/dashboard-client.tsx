@@ -25,6 +25,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const { getSubordinateIds } = useHierarchy();
   const [requests, setRequests] = useState<ProcurementRequest[]>(initialRequests);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
+  const [analyticsFilterId, setAnalyticsFilterId] = useState<string>('all');
   const { toast } = useToast();
 
   const totalApprovedBudget = useMemo(() => {
@@ -163,6 +164,36 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
     }
   };
 
+  const pieChartRequests = useMemo(() => {
+    if (user.role === 'state' && analyticsFilterId !== 'all') {
+        const selectedDistrict = allUsers.find(u => u.id === analyticsFilterId);
+        if (!selectedDistrict) return requests;
+
+        const talukasInDistrict = allUsers.filter(u => u.reportsTo === selectedDistrict.id).map(u => u.id);
+        const basesInDistrict = allUsers.filter(u => talukasInDistrict.includes(u.reportsTo || '')).map(u => u.id);
+        
+        return requests.filter(req => {
+            const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
+            return submittedByUser && basesInDistrict.includes(submittedByUser.id);
+        });
+    }
+    return requests;
+  }, [requests, user.role, analyticsFilterId, allUsers]);
+
+  const getPieChartTitleAndDescription = () => {
+    if (user.role === 'state' && analyticsFilterId !== 'all') {
+        const districtName = allUsers.find(u => u.id === analyticsFilterId)?.name || 'the selected district';
+        return {
+            title: `Cost Breakdown for ${districtName}`,
+            description: `Estimated approved cost by category for ${districtName}.`
+        }
+    }
+    return {
+        title: "Estimated Approved Cost by Category",
+        description: "A breakdown of the total estimated cost of approved requests by procurement category."
+    }
+  }
+
 
   return (
     <div className="space-y-6">
@@ -175,11 +206,20 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
       {(user.role === 'district' || user.role === 'state') && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <AnalyticsChart requests={requests} allUsers={allUsers} currentUser={user} />
+            <AnalyticsChart 
+                requests={requests} 
+                allUsers={allUsers} 
+                currentUser={user} 
+                selectedFilterId={analyticsFilterId}
+                onFilterChange={setAnalyticsFilterId}
+            />
             {user.role === 'district' ? (
                 <ApprovedItemsTable requests={requests} currentUser={user} />
             ) : (
-                <CategoryPieChart requests={requests} />
+                <CategoryPieChart 
+                    requests={pieChartRequests} 
+                    {...getPieChartTitleAndDescription()}
+                />
             )}
         </div>
       )}

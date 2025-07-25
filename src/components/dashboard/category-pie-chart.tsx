@@ -2,13 +2,14 @@
 "use client";
 
 import { useMemo } from 'react';
-import type { ProcurementRequest, ProcurementCategory } from '@/lib/data';
-import { procurementCategories } from '@/lib/data';
+import type { ProcurementRequest } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
 interface CategoryPieChartProps {
   requests: ProcurementRequest[];
+  title?: string;
+  description?: string;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -23,11 +24,15 @@ const formatCurrency = (value: number) => {
     return `₹${value.toLocaleString('en-IN')}`;
 }
 
-export function CategoryPieChart({ requests }: CategoryPieChartProps) {
+export function CategoryPieChart({ 
+    requests,
+    title = "Estimated Approved Cost by Category",
+    description = "A breakdown of the total estimated cost of approved requests by procurement category."
+}: CategoryPieChartProps) {
   const chartData = useMemo(() => {
     const approvedRequests = requests.filter(r => r.status === 'Approved');
 
-    const dataByCategory = procurementCategories.map(category => {
+    const dataByCategory = (['HR', 'Infrastructure', 'Equipment', 'Training'] as const).map(category => {
       const categoryCost = approvedRequests
         .filter(req => req.category === category)
         .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
@@ -41,9 +46,9 @@ export function CategoryPieChart({ requests }: CategoryPieChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Estimated Approved Cost by Category</CardTitle>
+        <CardTitle>{title}</CardTitle>
         <CardDescription>
-          A breakdown of the total estimated cost of approved requests by procurement category.
+          {description}
         </CardDescription>
       </CardHeader>
       <CardContent>

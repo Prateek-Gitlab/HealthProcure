@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import type { ProcurementRequest, User, ProcurementCategory } from '@/lib/data';
 import { procurementCategories } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -12,10 +12,11 @@ interface AnalyticsChartProps {
   requests: ProcurementRequest[];
   allUsers: User[];
   currentUser: User;
+  selectedFilterId: string;
+  onFilterChange: (id: string) => void;
 }
 
-export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsChartProps) {
-  const [selectedFilterId, setSelectedFilterId] = useState<string>('all'); // Can be district ID or taluka ID
+export function AnalyticsChart({ requests, allUsers, currentUser, selectedFilterId, onFilterChange }: AnalyticsChartProps) {
   const [selectedCategory, setSelectedCategory] = useState<ProcurementCategory | 'all'>('all');
 
   const isStateUser = currentUser.role === 'state';
@@ -154,7 +155,7 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
                 <CardDescription>{cardDescription()}</CardDescription>
             </div>
             <div className="flex gap-2">
-                <Select value={selectedFilterId} onValueChange={setSelectedFilterId}>
+                <Select value={selectedFilterId} onValueChange={onFilterChange}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder={isStateUser ? "Select District" : "Select Taluka"} />
                     </SelectTrigger>
