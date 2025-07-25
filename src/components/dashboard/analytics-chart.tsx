@@ -70,22 +70,25 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
     } else {
       // A specific district or taluka is selected
       if (isStateUser) {
-        // State user, single district selected: Show cost per taluka in that district
+        // State user, single district selected: Show cost per category in that district
         const selectedDistrict = allUsers.find(u => u.id === selectedFilterId);
         if (!selectedDistrict) return [];
 
-        const talukasInDistrict = allUsers.filter(u => u.reportsTo === selectedDistrict.id && u.role === 'taluka');
-        return talukasInDistrict.map(taluka => {
-            const talukaBases = allUsers.filter(u => u.reportsTo === taluka.id).map(u=>u.id);
-            const talukaRequests = approvedRequests.filter(req => {
-                const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
-                if (!submittedByUser) return false;
-                const isInCategory = selectedCategory === 'all' || req.category === selectedCategory;
-                return isInCategory && talukaBases.includes(submittedByUser.id);
-            });
-            const totalCost = talukaRequests.reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
-            return { name: taluka.name, totalCost };
+        const talukasInDistrict = allUsers.filter(u => u.reportsTo === selectedDistrict.id).map(u => u.id);
+        const basesInDistrict = allUsers.filter(u => talukasInDistrict.includes(u.reportsTo || '')).map(u => u.id);
+        
+        const relevantRequests = approvedRequests.filter(req => {
+            const submittedByUser = allUsers.find(u => u.id === req.submittedBy);
+            return submittedByUser && basesInDistrict.includes(submittedByUser.id);
         });
+
+        return procurementCategories.map(category => {
+            const categoryCost = relevantRequests
+              .filter(req => req.category === category)
+              .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
+            
+            return { name: category, totalCost: categoryCost };
+        }).filter(d => d.totalCost > 0);
       } else {
         // District user, single taluka selected: Show cost per category in that taluka
         const talukaUser = allUsers.find(u => u.id === selectedFilterId);
@@ -122,11 +125,12 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
 
   const isSingleEntityView = selectedFilterId !== 'all';
   const isSingleTalukaViewForDistrictUser = !isStateUser && isSingleEntityView;
+  const isSingleDistrictViewForStateUser = isStateUser && isSingleEntityView;
 
   const cardDescription = () => {
     if (isStateUser) {
         if(isSingleEntityView) {
-            return `Total cost by Taluka for ${getSelectedEntityName()}`;
+            return `Total cost by category for ${getSelectedEntityName()}`;
         }
         return 'Total cost of approved requests by District.';
     }
@@ -137,7 +141,9 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
     return 'Total cost of approved requests by Taluka.';
   }
 
-  const chartXAxisLabel = isSingleTalukaViewForDistrictUser ? "Category" : (isStateUser && isSingleEntityView ? "Taluka" : (isStateUser ? "District" : "Taluka"));
+  const chartXAxisLabel = isSingleTalukaViewForDistrictUser || isSingleDistrictViewForStateUser 
+    ? "Category" 
+    : (isStateUser ? "District" : "Taluka");
 
   return (
     <Card>
@@ -162,7 +168,7 @@ export function AnalyticsChart({ requests, allUsers, currentUser }: AnalyticsCha
                 <Select 
                     value={selectedCategory} 
                     onValueChange={(value) => setSelectedCategory(value as ProcurementCategory | 'all')}
-                    disabled={isSingleTalukaViewForDistrictUser}
+                    disabled={isSingleTalukaViewForDistrictUser || isSingleDistrictViewForStateUser}
                 >
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Select Category" />
