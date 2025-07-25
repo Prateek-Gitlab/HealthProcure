@@ -41,7 +41,7 @@ export function CategoryPieChart({ requests }: CategoryPieChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Approved Cost by Category</CardTitle>
+        <CardTitle>Estimated Approved Cost by Category</CardTitle>
         <CardDescription>
           A breakdown of the total estimated cost of approved requests by procurement category.
         </CardDescription>
