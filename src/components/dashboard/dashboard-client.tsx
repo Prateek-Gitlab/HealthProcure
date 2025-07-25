@@ -14,6 +14,7 @@ import { StagedRequests } from "@/components/dashboard/staged-requests";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { CategoryPieChart } from "./category-pie-chart";
+import { PlaceholderChart } from "./placeholder-chart";
 
 
 interface DashboardClientProps {
@@ -216,10 +217,13 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
             {user.role === 'district' ? (
                 <ApprovedItemsTable requests={requests} currentUser={user} />
             ) : (
-                <CategoryPieChart 
-                    requests={pieChartRequests} 
-                    {...getPieChartTitleAndDescription()}
-                />
+                <div className="space-y-6">
+                    <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
+                    <CategoryPieChart 
+                        requests={pieChartRequests} 
+                        {...getPieChartTitleAndDescription()}
+                    />
+                </div>
             )}
         </div>
       )}
