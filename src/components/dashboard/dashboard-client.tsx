@@ -219,8 +219,8 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       )}
 
       {user.role === 'state' && (
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <div className="lg:col-span-3 flex flex-col gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="flex flex-col gap-6">
                 <AnalyticsChart 
                     requests={requests} 
                     allUsers={allUsers} 
@@ -229,14 +229,14 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
                     onFilterChange={setAnalyticsFilterId}
                 />
             </div>
-            <div className="lg:col-span-2 flex flex-col gap-6">
+            <div className="flex flex-col gap-6">
                 <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
                 <CategoryPieChart 
                     requests={pieChartRequests} 
                     {...getPieChartTitleAndDescription()}
                 />
             </div>
-             <div className="lg:col-span-5">
+             <div className="lg:col-span-2">
                 <ApprovedItemsTable requests={requests} currentUser={user} />
              </div>
         </div>

@@ -53,7 +53,7 @@ export function CategoryPieChart({
       </CardHeader>
       <CardContent className="flex-1 flex items-center justify-center">
         {chartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%" min-height="250px">
+          <ResponsiveContainer width="100%" height={250}>
             <PieChart>
               <Pie
                 data={chartData}
