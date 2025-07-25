@@ -23,10 +23,12 @@ type AggregatedData = Record<ProcurementCategory, AggregatedItem[]>;
 export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
   
   const aggregatedData: AggregatedData = useMemo(() => {
-    // No status filter, we want all requested items for the user
+    // Only include requests that are not rejected.
+    const relevantRequests = requests.filter(r => r.status !== 'Rejected');
+    
     const itemsMap = new Map<string, AggregatedItem & { category: ProcurementCategory }>();
 
-    requests.forEach(request => {
+    relevantRequests.forEach(request => {
       const existingItem = itemsMap.get(request.itemName);
       const cost = (request.pricePerUnit || 0) * request.quantity;
 
