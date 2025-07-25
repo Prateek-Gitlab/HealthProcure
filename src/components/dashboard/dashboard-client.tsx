@@ -27,6 +27,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const [requests, setRequests] = useState<ProcurementRequest[]>(initialRequests);
   const [filterStatus, setFilterStatus] = useState<FilterStatus>('pending');
   const [analyticsFilterId, setAnalyticsFilterId] = useState<string>('all');
+  const [lastSubmittedRequests, setLastSubmittedRequests] = useState<ProcurementRequest[]>([]);
   const { toast } = useToast();
 
   const totalApprovedBudget = useMemo(() => {
@@ -59,6 +60,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         const successfulRequests = addedRequests.filter(r => r) as ProcurementRequest[];
         
         setRequests(currentRequests => [...currentRequests, ...successfulRequests]);
+        setLastSubmittedRequests(successfulRequests);
         
         toast({
             title: "Requests Submitted",
@@ -220,19 +222,27 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
       {user.role === 'state' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <AnalyticsChart 
-                requests={requests} 
-                allUsers={allUsers} 
-                currentUser={user} 
-                selectedFilterId={analyticsFilterId}
-                onFilterChange={setAnalyticsFilterId}
-            />
-            <CategoryPieChart 
-                requests={pieChartRequests} 
-                {...getPieChartTitleAndDescription()}
-            />
-            <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
-            <ApprovedItemsTable requests={requests} currentUser={user} />
+            <div className="flex flex-col gap-6 h-full">
+                <AnalyticsChart 
+                    requests={requests} 
+                    allUsers={allUsers} 
+                    currentUser={user} 
+                    selectedFilterId={analyticsFilterId}
+                    onFilterChange={setAnalyticsFilterId}
+                />
+            </div>
+            <div className="flex flex-col gap-6 h-full">
+                <CategoryPieChart 
+                    requests={pieChartRequests} 
+                    {...getPieChartTitleAndDescription()}
+                />
+            </div>
+            <div className="flex flex-col gap-6 h-full">
+                <PlaceholderChart currentUser={user} totalApprovedBudget={totalApprovedBudget} />
+            </div>
+            <div className="flex flex-col gap-6 h-full">
+                 <ApprovedItemsTable requests={requests} currentUser={user} />
+            </div>
         </div>
       )}
 
@@ -240,6 +250,16 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
         <>
             <StagedRequests onSubmit={handleSubmitStagedRequests} />
             <Separator />
+            {lastSubmittedRequests.length > 0 && (
+                <div className="pt-6">
+                    <CategoryPieChart
+                        requests={lastSubmittedRequests}
+                        title="Summary of Your Submitted Requests"
+                        description="This chart shows the total estimated budget for the requests you just submitted, broken down by category."
+                        showApprovedOnly={false}
+                    />
+                </div>
+            )}
         </>
       )}
 

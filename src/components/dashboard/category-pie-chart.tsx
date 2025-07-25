@@ -10,6 +10,7 @@ interface CategoryPieChartProps {
   requests: ProcurementRequest[];
   title?: string;
   description?: string;
+  showApprovedOnly?: boolean;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -27,13 +28,14 @@ const formatCurrency = (value: number) => {
 export function CategoryPieChart({ 
     requests,
     title = "Estimated Approved Cost by Category",
-    description = "A breakdown of the total estimated cost of approved requests by procurement category."
+    description = "A breakdown of the total estimated cost of approved requests by procurement category.",
+    showApprovedOnly = true
 }: CategoryPieChartProps) {
   const chartData = useMemo(() => {
-    const approvedRequests = requests.filter(r => r.status === 'Approved');
+    const relevantRequests = showApprovedOnly ? requests.filter(r => r.status === 'Approved') : requests;
 
     const dataByCategory = (['HR', 'Infrastructure', 'Equipment', 'Training'] as const).map(category => {
-      const categoryCost = approvedRequests
+      const categoryCost = relevantRequests
         .filter(req => req.category === category)
         .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
 
@@ -41,7 +43,7 @@ export function CategoryPieChart({
     }).filter(d => d.value > 0);
     
     return dataByCategory;
-  }, [requests]);
+  }, [requests, showApprovedOnly]);
 
   return (
     <Card className="flex flex-col h-full">
@@ -77,7 +79,7 @@ export function CategoryPieChart({
           </ResponsiveContainer>
         ) : (
           <div className="flex items-center justify-center h-full">
-            <p className="text-muted-foreground">No approved requests with costs to display.</p>
+            <p className="text-muted-foreground">No requests with costs to display.</p>
           </div>
         )}
       </CardContent>
