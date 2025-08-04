@@ -96,7 +96,11 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
         head: [['Category', 'Total Cost (INR)']],
         body: categoryTableData,
         startY: summaryY + 5,
-        headStyles: { fillColor: darkGreyColor },
+        headStyles: { fillColor: darkGreyColor, textColor: [255,255,255] },
+        styles: {
+            lineWidth: 0.1,
+            lineColor: [200, 200, 200]
+        },
         tableWidth: 'auto',
         didDrawPage: (data) => {
             summaryY = data.cursor?.y ?? summaryY;
@@ -109,7 +113,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
         req.category,
         req.itemName,
         req.quantity,
-        (req.pricePerUnit ?? 0).toLocaleString('en-IN'),
+        req.pricePerUnit ? req.pricePerUnit.toLocaleString('en-IN') : '0',
         ((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-IN'),
         req.priority,
         req.status
@@ -119,7 +123,11 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
         head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (INR)', 'Total Cost (INR)', 'Priority', 'Status']],
         body: tableData,
         startY: summaryY + 10,
-        headStyles: { fillColor: primaryColor },
+        headStyles: { fillColor: primaryColor, textColor: [255,255,255] },
+        styles: {
+            lineWidth: 0.1,
+            lineColor: [200, 200, 200]
+        }
     });
 
     doc.save('procurement_requests.pdf');
