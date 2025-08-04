@@ -51,7 +51,7 @@ export function PdfDownloadDialog({ allRequests }: PdfDownloadDialogProps) {
     return getDirectSubordinates(user.id).filter(u => u.role === 'base');
   }, [user, getDirectSubordinates]);
 
-  const handleDownload = (values: z.infer<typeof formSchema>>) => {
+  const handleDownload = (values: z.infer<typeof formSchema>) => {
     const { selectedUsers } = values;
     
     const requestsToDownload = allRequests.filter(req => selectedUsers.includes(req.submittedBy));
@@ -115,7 +115,7 @@ export function PdfDownloadDialog({ allRequests }: PdfDownloadDialogProps) {
                                                     checked={field.value?.includes(item.id)}
                                                     onCheckedChange={(checked) => {
                                                         return checked
-                                                        ? field.onChange([...field.value, item.id])
+                                                        ? field.onChange([...(field.value || []), item.id])
                                                         : field.onChange(
                                                             field.value?.filter(
                                                                 (value) => value !== item.id
