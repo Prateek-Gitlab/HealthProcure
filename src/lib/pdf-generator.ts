@@ -32,14 +32,29 @@ const generateHeader = (doc: jsPDFWithAutoTable, title: string, subtitle?: strin
     }
 };
 
+const getSubordinateIds = (managerId: string, allUsers: User[]): string[] => {
+    const directSubordinates = allUsers.filter(u => u.reportsTo === managerId);
+    let allSubordinateIds = directSubordinates.map(u => u.id);
+    
+    directSubordinates.forEach(subordinate => {
+        allSubordinateIds = [...allSubordinateIds, ...getSubordinateIds(subordinate.id, allUsers)];
+    });
+
+    return allSubordinateIds;
+};
+
 export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: User[], currentUser: User) {
     const doc = new jsPDF() as jsPDFWithAutoTable;
     generateHeader(doc, "District Procurement Report", `Generated for: ${currentUser.name}`);
     
+    // Filter requests to only include those from the current district's hierarchy
+    const districtSubordinateIds = getSubordinateIds(currentUser.id, allUsers);
+    const districtRequests = requests.filter(r => districtSubordinateIds.includes(r.submittedBy));
+
     let tableY = 40;
 
     // 1. Total Budget Requirement
-    const totalBudget = requests
+    const totalBudget = districtRequests
         .filter(r => r.status !== 'Rejected')
         .reduce((sum, req) => sum + ((req.pricePerUnit || 0) * req.quantity), 0);
 
@@ -51,18 +66,13 @@ export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: Us
 
     // 2. Budget bifurcation by Talukas
     const talukaUsers = allUsers.filter(u => u.reportsTo === currentUser.id);
-    const talukaSubordinates = talukaUsers.reduce((acc, taluka) => {
-        const baseUsers = allUsers.filter(u => u.reportsTo === taluka.id);
-        acc[taluka.id] = baseUsers.map(u => u.id);
-        return acc;
-    }, {} as Record<string, string[]>);
     
-    const talukaBudgets = Object.entries(talukaSubordinates).map(([talukaId, baseIds]) => {
-        const talukaBudget = requests
-            .filter(r => baseIds.includes(r.submittedBy) && r.status !== 'Rejected')
+    const talukaBudgets = talukaUsers.map(taluka => {
+        const talukaSubordinateIds = getSubordinateIds(taluka.id, allUsers);
+        const talukaBudget = districtRequests
+            .filter(r => talukaSubordinateIds.includes(r.submittedBy) && r.status !== 'Rejected')
             .reduce((sum, req) => sum + ((req.pricePerUnit || 0) * req.quantity), 0);
-        const talukaName = allUsers.find(u => u.id === talukaId)?.name || 'Unknown Taluka';
-        return [talukaName, talukaBudget.toLocaleString('en-IN')];
+        return [taluka.name, talukaBudget.toLocaleString('en-IN')];
     });
 
     doc.setFontSize(14);
@@ -85,7 +95,7 @@ export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: Us
 
 
     // 3. Approved Items Summary
-    const approvedRequests = requests.filter(r => r.status === 'Approved');
+    const approvedRequests = districtRequests.filter(r => r.status === 'Approved');
     const itemsMap = new Map<string, { itemName: string; totalQuantity: number; totalCost: number; category: ProcurementCategory }>();
 
     approvedRequests.forEach(request => {
