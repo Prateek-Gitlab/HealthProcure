@@ -1,4 +1,5 @@
 
+
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import type { ProcurementRequest, User, ProcurementCategory } from './data';
@@ -217,14 +218,15 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(darkTextColor[0], darkTextColor[1], darkTextColor[2]);
-    doc.text(`Total Requested Budget (INR): ${totalBudget.toLocaleString('en-IN')}`, 14, summaryY);
+    doc.text(`Total Approved Budget (INR): ${totalBudget.toLocaleString('en-IN')}`, 14, summaryY);
     doc.setFont('helvetica', 'normal');
 
     summaryY += 5;
 
-    // Facility-wise budget summary
+    // Facility-wise budget summary for approved requests
+    const approvedRequests = requests.filter(req => req.status === 'Approved');
     const facilityTotals: { [key: string]: number } = {};
-    requests.forEach(req => {
+    approvedRequests.forEach(req => {
         const cost = (req.pricePerUnit || 0) * req.quantity;
         const userId = req.submittedBy;
         if (facilityTotals[userId]) {
@@ -244,7 +246,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
 
     if (facilityTableData.length > 1) { // Only show this table if more than one facility is selected
         doc.autoTable({
-            head: [['Facility Name', 'Total Cost (INR)']],
+            head: [['Facility Name', 'Approved Cost (INR)']],
             body: facilityTableData,
             startY: summaryY + 5,
             headStyles: { fillColor: darkGreyColor, textColor: [255,255,255] },
@@ -260,9 +262,9 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
     }
 
 
-    // Category-wise summary
+    // Category-wise summary for approved requests
     const categoryTotals: { [key: string]: number } = {};
-    requests.forEach(req => {
+    approvedRequests.forEach(req => {
         const cost = (req.pricePerUnit || 0) * req.quantity;
         if (categoryTotals[req.category]) {
             categoryTotals[req.category] += cost;
@@ -277,7 +279,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
     ]));
 
     doc.autoTable({
-        head: [['Category', 'Total Cost (INR)']],
+        head: [['Category', 'Approved Cost (INR)']],
         body: categoryTableData,
         startY: summaryY + 5,
         headStyles: { fillColor: darkGreyColor, textColor: [255,255,255] },
