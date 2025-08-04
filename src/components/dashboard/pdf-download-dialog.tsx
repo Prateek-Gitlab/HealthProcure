@@ -55,7 +55,9 @@ export function PdfDownloadDialog({ allRequests }: PdfDownloadDialogProps) {
     const { selectedUsers } = values;
     
     const requestsToDownload = allRequests.filter(req => selectedUsers.includes(req.submittedBy));
-    const totalBudget = requestsToDownload.reduce((sum, req) => sum + ((req.pricePerUnit || 0) * req.quantity), 0);
+    const totalBudget = requestsToDownload
+        .filter(req => req.status === 'Approved')
+        .reduce((sum, req) => sum + ((req.pricePerUnit || 0) * req.quantity), 0);
 
     let reportTitle = user?.name || "Taluka Report";
     if (selectedUsers.length === 1) {
