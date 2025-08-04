@@ -78,6 +78,44 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
 
     summaryY += 5;
 
+    // Facility-wise budget summary
+    const facilityTotals: { [key: string]: number } = {};
+    requests.forEach(req => {
+        const cost = (req.pricePerUnit || 0) * req.quantity;
+        const userId = req.submittedBy;
+        if (facilityTotals[userId]) {
+            facilityTotals[userId] += cost;
+        } else {
+            facilityTotals[userId] = cost;
+        }
+    });
+
+    const facilityTableData = Object.entries(facilityTotals).map(([userId, total]) => {
+        const user = getUserById(userId, allUsers);
+        return [
+            user ? user.name : userId,
+            total.toLocaleString('en-IN')
+        ];
+    });
+
+    if (facilityTableData.length > 1) { // Only show this table if more than one facility is selected
+        doc.autoTable({
+            head: [['Facility Name', 'Total Cost (INR)']],
+            body: facilityTableData,
+            startY: summaryY + 5,
+            headStyles: { fillColor: darkGreyColor, textColor: [255,255,255] },
+            styles: {
+                lineWidth: 0.1,
+                lineColor: [200, 200, 200]
+            },
+            tableWidth: 'auto',
+            didDrawPage: (data) => {
+                summaryY = data.cursor?.y ?? summaryY;
+            }
+        });
+    }
+
+
     // Category-wise summary
     const categoryTotals: { [key: string]: number } = {};
     requests.forEach(req => {
