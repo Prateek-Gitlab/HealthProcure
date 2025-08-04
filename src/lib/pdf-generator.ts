@@ -1,14 +1,16 @@
 
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import type { ProcurementRequest } from './data';
+import type { ProcurementRequest, User } from './data';
 
 // Extend jsPDF with autoTable plugin
 interface jsPDFWithAutoTable extends jsPDF {
     autoTable: (options: any) => jsPDF;
 }
 
-export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget: number, userName?: string) {
+const getUserById = (id: string, allUsers: User[]) => allUsers.find(u => u.id === id);
+
+export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget: number, allUsers: User[], userName?: string) {
     const doc = new jsPDF() as jsPDFWithAutoTable;
 
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -107,28 +109,57 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
         }
     });
 
+    let tableY = summaryY + 15;
 
-    const tableData = requests.map(req => ([
-        req.id,
-        req.category,
-        req.itemName,
-        req.quantity,
-        req.pricePerUnit ? req.pricePerUnit.toLocaleString('en-IN') : '0',
-        ((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-IN'),
-        req.priority,
-        req.status
-    ]));
-
-    doc.autoTable({
-        head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (INR)', 'Total Cost (INR)', 'Priority', 'Status']],
-        body: tableData,
-        startY: summaryY + 10,
-        headStyles: { fillColor: primaryColor, textColor: [255,255,255] },
-        styles: {
-            lineWidth: 0.1,
-            lineColor: [200, 200, 200]
+    // Group requests by submittedBy user
+    const requestsByUser = requests.reduce((acc, req) => {
+        const userId = req.submittedBy;
+        if (!acc[userId]) {
+            acc[userId] = [];
         }
-    });
+        acc[userId].push(req);
+        return acc;
+    }, {} as Record<string, ProcurementRequest[]>);
+    
+    // Create a table for each user
+    for (const userId in requestsByUser) {
+        const userRequests = requestsByUser[userId];
+        const submittedByUser = getUserById(userId, allUsers);
+        
+        if (submittedByUser) {
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`Requests from: ${submittedByUser.name}`, 14, tableY);
+            tableY += 8;
+        }
+
+        const tableData = userRequests.map(req => ([
+            req.id,
+            req.category,
+            req.itemName,
+            req.quantity,
+            req.pricePerUnit ? req.pricePerUnit.toLocaleString('en-IN') : '0',
+            ((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-IN'),
+            req.priority,
+            req.status
+        ]));
+    
+        doc.autoTable({
+            head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (INR)', 'Total Cost (INR)', 'Priority', 'Status']],
+            body: tableData,
+            startY: tableY,
+            headStyles: { fillColor: primaryColor, textColor: [255,255,255] },
+            styles: {
+                lineWidth: 0.1,
+                lineColor: [200, 200, 200]
+            },
+            didDrawPage: (data) => {
+                tableY = data.cursor?.y ?? tableY;
+            }
+        });
+        tableY += 10; // Add some space between tables
+    }
+
 
     doc.save('procurement_requests.pdf');
 }

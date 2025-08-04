@@ -26,7 +26,7 @@ type AggregatedData = Record<ProcurementCategory, AggregatedItem[]>;
 
 
 export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
-  const { user } = useAuth();
+  const { user, allUsers } = useAuth();
 
   const relevantRequests = useMemo(() => {
     return requests.filter(r => r.status !== 'Rejected');
@@ -78,7 +78,7 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
   }, [aggregatedData]);
 
   const handleDownloadPdf = () => {
-    generateRequestsPdf(requests, totalBudget, user?.name);
+    generateRequestsPdf(requests, totalBudget, allUsers, user?.name);
   };
 
   return (

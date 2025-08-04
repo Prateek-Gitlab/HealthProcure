@@ -35,7 +35,7 @@ const formSchema = z.object({
 });
 
 export function PdfDownloadDialog({ allRequests }: PdfDownloadDialogProps) {
-  const { user } = useAuth();
+  const { user, allUsers } = useAuth();
   const { getDirectSubordinates } = useHierarchy();
   const [isOpen, setIsOpen] = useState(false);
 
@@ -65,7 +65,7 @@ export function PdfDownloadDialog({ allRequests }: PdfDownloadDialogProps) {
         reportTitle += ` (Partial Report)`;
     }
 
-    generateRequestsPdf(requestsToDownload, totalBudget, reportTitle);
+    generateRequestsPdf(requestsToDownload, totalBudget, allUsers, reportTitle);
     
     setIsOpen(false);
     form.reset();
