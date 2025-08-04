@@ -90,14 +90,14 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
         req.category,
         req.itemName,
         req.quantity,
-        `₹${(req.pricePerUnit || 0).toLocaleString('en-US')}`,
-        `₹${((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-US')}`,
+        (req.pricePerUnit || 0).toLocaleString('en-IN'),
+        ((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-IN'),
         req.priority,
         req.status
     ]));
 
     doc.autoTable({
-        head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit', 'Total Cost', 'Priority', 'Status']],
+        head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (₹)', 'Total Cost (₹)', 'Priority', 'Status']],
         body: tableData,
         startY: 25,
         headStyles: { fillColor: [22, 163, 74] },
