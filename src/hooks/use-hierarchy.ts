@@ -3,6 +3,7 @@
 
 import { useCallback } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { User } from "@/lib/data";
 
 export function useHierarchy() {
     const { allUsers } = useAuth();
@@ -18,5 +19,9 @@ export function useHierarchy() {
         return allSubordinateIds;
     }, [allUsers]);
 
-    return { getSubordinateIds };
+    const getDirectSubordinates = useCallback((managerId: string): User[] => {
+        return allUsers.filter(u => u.reportsTo === managerId);
+    }, [allUsers]);
+
+    return { getSubordinateIds, getDirectSubordinates };
 }

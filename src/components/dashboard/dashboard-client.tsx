@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { CategoryPieChart } from "./category-pie-chart";
 import { PlaceholderChart } from "./placeholder-chart";
 import { RequestedBudgetTable } from "./requested-budget-table";
+import { PdfDownloadDialog } from "./pdf-download-dialog";
 
 
 interface DashboardClientProps {
@@ -257,6 +258,11 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold font-headline">{getTitle()}</h2>
+        {user.role === 'taluka' && (
+            <PdfDownloadDialog 
+                allRequests={allUserRequests}
+            />
+        )}
       </div>
 
       <RequestList
