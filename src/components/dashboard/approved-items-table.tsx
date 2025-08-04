@@ -8,6 +8,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '../ui/button';
+import { Download } from 'lucide-react';
+import { generateDistrictPdf } from '@/lib/pdf-generator';
+import { useAuth } from '@/contexts/auth-context';
+
 
 interface ApprovedItemsTableProps {
   requests: ProcurementRequest[];
@@ -38,6 +43,8 @@ const getTitleAndDescription = (role: Role) => {
 
 export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTableProps) {
   const { getSubordinateIds } = useHierarchy();
+  const { allUsers } = useAuth();
+
 
   const subordinateIds = useMemo(() => {
     return getSubordinateIds(currentUser.id);
@@ -94,10 +101,23 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>
-          {description}
-        </CardDescription>
+        <div className="flex justify-between items-start">
+            <div>
+                <CardTitle>{title}</CardTitle>
+                <CardDescription>
+                {description}
+                </CardDescription>
+            </div>
+            {currentUser.role === 'district' && (
+                <Button 
+                    variant="outline"
+                    onClick={() => generateDistrictPdf(requests, allUsers, currentUser)}
+                >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download PDF Report
+                </Button>
+            )}
+        </div>
       </CardHeader>
       <CardContent className="flex-1">
         <ScrollArea className="h-full max-h-96">

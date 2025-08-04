@@ -17,9 +17,6 @@ import { CategoryPieChart } from "./category-pie-chart";
 import { PlaceholderChart } from "./placeholder-chart";
 import { RequestedBudgetTable } from "./requested-budget-table";
 import { PdfDownloadDialog } from "./pdf-download-dialog";
-import { Button } from "../ui/button";
-import { Download } from "lucide-react";
-import { generateDistrictPdf } from "@/lib/pdf-generator";
 
 
 interface DashboardClientProps {
@@ -265,15 +262,6 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
             <PdfDownloadDialog 
                 allRequests={allUserRequests}
             />
-        )}
-        {user.role === 'district' && (
-             <Button 
-                variant="outline"
-                onClick={() => generateDistrictPdf(allUserRequests, allUsers, user)}
-             >
-                <Download className="mr-2 h-4 w-4" />
-                Download PDF Report
-             </Button>
         )}
       </div>
 
