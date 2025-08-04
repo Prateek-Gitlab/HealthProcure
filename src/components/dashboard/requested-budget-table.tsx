@@ -90,8 +90,8 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
         req.category,
         req.itemName,
         req.quantity,
-        `₹${(req.pricePerUnit || 0).toLocaleString('en-IN')}`,
-        `₹${((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-IN')}`,
+        `₹${(req.pricePerUnit || 0).toLocaleString('en-US')}`,
+        `₹${((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-US')}`,
         req.priority,
         req.status
     ]));
