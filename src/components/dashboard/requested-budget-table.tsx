@@ -92,12 +92,18 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
     const rejectedCount = requests.filter(r => r.status === 'Rejected').length;
 
     // Add summary text
-    const summaryY = 25;
+    let summaryY = 25;
     doc.setFontSize(10);
     doc.text(`Total Requests: ${totalCount}`, 14, summaryY);
     doc.text(`Pending: ${pendingCount}`, 60, summaryY);
     doc.text(`Approved: ${approvedCount}`, 90, summaryY);
     doc.text(`Rejected: ${rejectedCount}`, 125, summaryY);
+
+    summaryY += 7;
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`Total Requested Budget (INR): ${totalBudget.toLocaleString('en-IN')}`, 14, summaryY);
+    doc.setFont('helvetica', 'normal');
 
 
     const tableData = requests.map(req => ([
@@ -114,7 +120,7 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
     doc.autoTable({
         head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (INR)', 'Total Cost (INR)', 'Priority', 'Status']],
         body: tableData,
-        startY: summaryY + 10,
+        startY: summaryY + 5,
         headStyles: { fillColor: [22, 163, 74] },
     });
 
