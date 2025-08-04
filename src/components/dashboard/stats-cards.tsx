@@ -51,13 +51,17 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   }
 
   const cardStyle = (filter: FilterStatus) => cn(
-    "transition-all cursor-pointer hover:shadow-md",
-    activeFilter === filter ? "bg-primary text-primary-foreground" : "bg-card",
+    "transition-all duration-200 cursor-pointer hover:scale-105 animate-fade-in",
+    activeFilter === filter
+      ? "bg-primary text-white shadow-custom-lg border-primary/20"
+      : "shadow-custom hover:shadow-custom-md border-border",
   );
 
   const iconStyle = (filter: FilterStatus) => cn(
-    "p-2 rounded-full",
-    activeFilter === filter ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary"
+    "p-2 rounded-custom transition-all duration-200",
+    activeFilter === filter
+      ? "bg-white/20 text-white"
+      : "bg-secondary hover:bg-secondary-hover"
   )
   
   const handleCardClick = (filter: FilterStatus) => {
@@ -71,7 +75,8 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
       value: totalRequests,
       description: userRole === 'base' ? 'Requests you submitted' : 'Requests in your purview',
       Icon: ListTodo,
-      iconColor: 'text-muted-foreground'
+      iconColor: 'text-info',
+      gradient: 'from-info/10 to-info/5'
     },
     {
       id: 'pending',
@@ -79,7 +84,8 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
       value: pendingRequests,
       description: 'Awaiting action',
       Icon: FileClock,
-      iconColor: 'text-muted-foreground'
+      iconColor: 'text-warning',
+      gradient: 'from-warning/10 to-warning/5'
     },
     {
       id: 'approved-by-me',
@@ -87,7 +93,8 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
       value: approvedByMeRequests,
       description: 'Completed requests',
       Icon: CheckCircle2,
-      iconColor: 'text-green-500'
+      iconColor: 'text-success',
+      gradient: 'from-success/10 to-success/5'
     },
     {
       id: 'Rejected',
@@ -95,30 +102,56 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
       value: rejectedRequests,
       description: 'Requires revision',
       Icon: XCircle,
-      iconColor: 'text-red-500'
+      iconColor: 'text-destructive',
+      gradient: 'from-destructive/10 to-destructive/5'
     },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {cardsData.map(card => (
-        <Card 
+    <div className="grid gap-lg md:grid-cols-2 lg:grid-cols-4">
+      {cardsData.map((card, index) => (
+        <Card
           key={card.id}
-          className={cardStyle(card.id as FilterStatus)} 
+          variant={activeFilter === card.id ? "default" : "elevated"}
+          className={cn(
+            cardStyle(card.id as FilterStatus),
+            activeFilter !== card.id && `bg-gradient-to-br ${card.gradient}`,
+            "animate-fade-in"
+          )}
+          style={{ animationDelay: `${index * 100}ms` }}
           onClick={() => handleCardClick(card.id as FilterStatus)}
         >
-          <CardHeader>
-            <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className={cn(
+              "text-sm font-medium font-headline transition-colors duration-200",
+              activeFilter === card.id ? "text-white" : "text-foreground"
+            )}>
+              {card.title}
+            </CardTitle>
           </CardHeader>
           <CardContent className="flex items-end justify-between">
-            <div>
-              <div className="text-2xl font-bold">{card.value}</div>
-              <p className={cn("text-xs", activeFilter === card.id ? "text-primary-foreground/80" : "text-muted-foreground")}>
+            <div className="space-y-1">
+              <div className={cn(
+                "text-3xl font-bold font-headline transition-all duration-200",
+                activeFilter === card.id ? "text-white" : "text-foreground"
+              )}>
+                {card.value}
+              </div>
+              <p className={cn(
+                "text-xs leading-relaxed transition-colors duration-200",
+                activeFilter === card.id ? "text-white/90" : "text-muted-foreground"
+              )}>
                 {card.description}
               </p>
             </div>
-            <div className={iconStyle(card.id as FilterStatus)}>
-                <card.Icon className={cn("h-5 w-5", activeFilter !== card.id && card.iconColor)} />
+            <div className={cn(
+              iconStyle(card.id as FilterStatus),
+              "transform transition-transform duration-200 hover:scale-110"
+            )}>
+              <card.Icon className={cn(
+                "h-5 w-5 transition-colors duration-200",
+                activeFilter === card.id ? "text-white" : card.iconColor
+              )} />
             </div>
           </CardContent>
         </Card>
