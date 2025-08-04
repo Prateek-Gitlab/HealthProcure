@@ -12,6 +12,7 @@ import { Button } from '../ui/button';
 import { Download } from 'lucide-react';
 import { generateDistrictPdf } from '@/lib/pdf-generator';
 import { useAuth } from '@/contexts/auth-context';
+import { cn } from '@/lib/utils';
 
 
 interface ApprovedItemsTableProps {
@@ -40,6 +41,13 @@ const getTitleAndDescription = (role: Role) => {
         description: "A summary of all approved items within the district"
     }
 }
+
+const categoryColors: Record<ProcurementCategory, string> = {
+    'Equipment': 'bg-blue-100/50 hover:bg-blue-200/50 text-blue-800',
+    'HR': 'bg-green-100/50 hover:bg-green-200/50 text-green-800',
+    'Infrastructure': 'bg-orange-100/50 hover:bg-orange-200/50 text-orange-800',
+    'Training': 'bg-purple-100/50 hover:bg-purple-200/50 text-purple-800',
+};
 
 export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTableProps) {
   const { getSubordinateIds } = useHierarchy();
@@ -124,8 +132,14 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
             {aggregatedCategories.length > 0 ? (
                 <Accordion type="multiple" className="w-full space-y-2" defaultValue={aggregatedCategories}>
                     {aggregatedCategories.map(category => (
-                        <AccordionItem value={category} key={category} className="border rounded-md bg-gradient-to-br from-card to-muted/50">
-                            <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
+                        <AccordionItem value={category} key={category} className={cn(
+                          "border rounded-md",
+                          currentUser.role === 'state' ? 'bg-gradient-to-br from-card to-muted/50' : ''
+                        )}>
+                            <AccordionTrigger className={cn(
+                              "p-4 text-base font-medium hover:no-underline",
+                              currentUser.role === 'state' ? categoryColors[category] : ''
+                            )}>
                                 {category}
                             </AccordionTrigger>
                             <AccordionContent className="p-0 border-t bg-card">
