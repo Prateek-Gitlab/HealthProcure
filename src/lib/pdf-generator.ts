@@ -1,7 +1,8 @@
 
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import type { ProcurementRequest, User } from './data';
+import type { ProcurementRequest, User, ProcurementCategory } from './data';
+import type { AggregatedData } from '@/components/dashboard/approved-items-table';
 
 // Extend jsPDF with autoTable plugin
 interface jsPDFWithAutoTable extends jsPDF {
@@ -10,37 +11,170 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 const getUserById = (id: string, allUsers: User[]) => allUsers.find(u => u.id === id);
 
-export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget: number, allUsers: User[], userName?: string) {
-    const doc = new jsPDF() as jsPDFWithAutoTable;
+const primaryColor = [79, 175, 245]; // hsl(207, 90%, 61%)
+const greyColor = [240, 240, 240];
+const darkGreyColor = [74, 74, 74];
+const textColor = [255, 255, 255];
+const darkTextColor = [0, 0, 0];
 
+const generateHeader = (doc: jsPDFWithAutoTable, title: string, subtitle?: string) => {
     const pageWidth = doc.internal.pageSize.getWidth();
-    const primaryColor = [79, 175, 245]; // hsl(207, 90%, 61%)
-    const greyColor = [240, 240, 240];
-    const darkGreyColor = [74, 74, 74];
-    const textColor = [255, 255, 255];
-    const darkTextColor = [0, 0, 0];
-    
-    // Header
     doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
     doc.rect(0, 0, pageWidth, 30, 'F');
     doc.setFontSize(18);
     doc.setTextColor(textColor[0], textColor[1], textColor[2]);
     doc.setFont('helvetica', 'bold');
-    doc.text("Procurement Requests Summary", 14, 18);
-    if (userName) {
+    doc.text(title, 14, 18);
+    if (subtitle) {
         doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        doc.text(`Generated for: ${userName}`, 14, 25);
+        doc.text(subtitle, 14, 25);
+    }
+};
+
+export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: User[], currentUser: User) {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    generateHeader(doc, "District Procurement Report", `Generated for: ${currentUser.name}`);
+    
+    let tableY = 40;
+
+    // 1. Total Budget Requirement
+    const totalBudget = requests
+        .filter(r => r.status !== 'Rejected')
+        .reduce((sum, req) => sum + ((req.pricePerUnit || 0) * req.quantity), 0);
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(darkTextColor[0], darkTextColor[1], darkTextColor[2]);
+    doc.text(`Total Requested Budget (INR): ${totalBudget.toLocaleString('en-IN')}`, 14, tableY);
+    tableY += 10;
+
+    // 2. Budget bifurcation by Talukas
+    const talukaUsers = allUsers.filter(u => u.reportsTo === currentUser.id);
+    const talukaSubordinates = talukaUsers.reduce((acc, taluka) => {
+        const baseUsers = allUsers.filter(u => u.reportsTo === taluka.id);
+        acc[taluka.id] = baseUsers.map(u => u.id);
+        return acc;
+    }, {} as Record<string, string[]>);
+    
+    const talukaBudgets = Object.entries(talukaSubordinates).map(([talukaId, baseIds]) => {
+        const talukaBudget = requests
+            .filter(r => baseIds.includes(r.submittedBy) && r.status !== 'Rejected')
+            .reduce((sum, req) => sum + ((req.pricePerUnit || 0) * req.quantity), 0);
+        const talukaName = allUsers.find(u => u.id === talukaId)?.name || 'Unknown Taluka';
+        return [talukaName, talukaBudget.toLocaleString('en-IN')];
+    });
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Budget Breakdown by Taluka', 14, tableY);
+    tableY += 8;
+
+    doc.autoTable({
+        head: [['Taluka', 'Total Cost (INR)']],
+        body: talukaBudgets,
+        startY: tableY,
+        headStyles: { fillColor: darkGreyColor, textColor: [255,255,255] },
+        styles: {
+            lineWidth: 0.1,
+            lineColor: [200, 200, 200]
+        },
+    });
+
+    tableY = doc.autoTable.previous.finalY + 15;
+
+
+    // 3. Approved Items Summary
+    const approvedRequests = requests.filter(r => r.status === 'Approved');
+    const itemsMap = new Map<string, { itemName: string; totalQuantity: number; totalCost: number; category: ProcurementCategory }>();
+
+    approvedRequests.forEach(request => {
+        const existingItem = itemsMap.get(request.itemName);
+        const cost = (request.pricePerUnit || 0) * request.quantity;
+
+        if (existingItem) {
+            existingItem.totalQuantity += request.quantity;
+            existingItem.totalCost += cost;
+        } else {
+            itemsMap.set(request.itemName, {
+                itemName: request.itemName,
+                totalQuantity: request.quantity,
+                totalCost: cost,
+                category: request.category,
+            });
+        }
+    });
+
+    const aggregatedData = Array.from(itemsMap.values()).reduce((acc, item) => {
+        if (!acc[item.category]) {
+            acc[item.category] = [];
+        }
+        acc[item.category].push({
+            itemName: item.itemName,
+            totalQuantity: item.totalQuantity,
+            totalCost: item.totalCost
+        });
+        acc[item.category].sort((a, b) => b.totalCost - a.totalCost);
+        return acc;
+    }, {} as AggregatedData);
+
+    const aggregatedCategories = Object.keys(aggregatedData) as ProcurementCategory[];
+
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Approved Items Summary', 14, tableY);
+    tableY += 8;
+
+    if (aggregatedCategories.length > 0) {
+        aggregatedCategories.forEach(category => {
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'bold');
+            doc.text(category, 14, tableY);
+            tableY += 6;
+            
+            const tableData = aggregatedData[category].map(item => [
+                item.itemName,
+                item.totalQuantity.toLocaleString(),
+                item.totalCost.toLocaleString('en-IN')
+            ]);
+            
+            doc.autoTable({
+                head: [['Item', 'Total Quantity', 'Estimated Cost (INR)']],
+                body: tableData,
+                startY: tableY,
+                headStyles: { fillColor: primaryColor, textColor: [255,255,255] },
+                styles: {
+                    lineWidth: 0.1,
+                    lineColor: [200, 200, 200]
+                },
+            });
+            tableY = doc.autoTable.previous.finalY + 10;
+        });
+    } else {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text('No approved items to display.', 14, tableY);
     }
 
+
+    doc.save(`district_procurement_report_${currentUser.name.replace(/\s+/g, '_')}.pdf`);
+}
+
+
+export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget: number, allUsers: User[], userName?: string) {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    
+    generateHeader(doc, "Procurement Requests Summary", `Generated for: ${userName || 'User'}`);
+
     // Summary calculations
+    let summaryY = 40;
     const totalCount = requests.length;
     const pendingCount = requests.filter(r => r.status.startsWith('Pending')).length;
     const approvedCount = requests.filter(r => r.status === 'Approved').length;
     const rejectedCount = requests.filter(r => r.status === 'Rejected').length;
 
     // Summary Boxes
-    let summaryY = 40;
+    const pageWidth = doc.internal.pageSize.getWidth();
     const boxWidth = (pageWidth - 28 - 15) / 4; // 14 padding on each side, 5 padding between boxes
     const boxHeight = 25;
 

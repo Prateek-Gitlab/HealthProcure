@@ -20,7 +20,7 @@ interface AggregatedItem {
   totalCost: number;
 }
 
-type AggregatedData = Record<ProcurementCategory, AggregatedItem[]>;
+export type AggregatedData = Record<ProcurementCategory, AggregatedItem[]>;
 
 const getTitleAndDescription = (role: Role) => {
     if (role === 'state') {
@@ -102,7 +102,7 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
       <CardContent className="flex-1">
         <ScrollArea className="h-full max-h-96">
             {aggregatedCategories.length > 0 ? (
-                <Accordion type="multiple" className="w-full space-y-2">
+                <Accordion type="multiple" className="w-full space-y-2" defaultValue={aggregatedCategories}>
                     {aggregatedCategories.map(category => (
                         <AccordionItem value={category} key={category} className="border rounded-md">
                             <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
