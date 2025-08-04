@@ -10,8 +10,21 @@ interface jsPDFWithAutoTable extends jsPDF {
 
 export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget: number) {
     const doc = new jsPDF() as jsPDFWithAutoTable;
+
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const primaryColor = [79, 175, 245]; // hsl(207, 90%, 61%)
+    const greyColor = [240, 240, 240];
+    const darkGreyColor = [74, 74, 74];
+    const textColor = [255, 255, 255];
+    const darkTextColor = [0, 0, 0];
     
-    doc.text("Procurement Requests Summary", 14, 15);
+    // Header
+    doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.rect(0, 0, pageWidth, 30, 'F');
+    doc.setFontSize(18);
+    doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+    doc.setFont('helvetica', 'bold');
+    doc.text("Procurement Requests Summary", 14, 18);
 
     // Summary calculations
     const totalCount = requests.length;
@@ -19,19 +32,44 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
     const approvedCount = requests.filter(r => r.status === 'Approved').length;
     const rejectedCount = requests.filter(r => r.status === 'Rejected').length;
 
-    // Add summary text
-    let summaryY = 25;
-    doc.setFontSize(10);
-    doc.text(`Total Requests: ${totalCount}`, 14, summaryY);
-    doc.text(`Pending: ${pendingCount}`, 60, summaryY);
-    doc.text(`Approved: ${approvedCount}`, 90, summaryY);
-    doc.text(`Rejected: ${rejectedCount}`, 125, summaryY);
+    // Summary Boxes
+    let summaryY = 40;
+    const boxWidth = (pageWidth - 28 - 15) / 4; // 14 padding on each side, 5 padding between boxes
+    const boxHeight = 25;
 
-    summaryY += 7;
+    const summaryData = [
+        { label: "Total Requests", value: totalCount },
+        { label: "Pending", value: pendingCount },
+        { label: "Approved", value: approvedCount },
+        { label: "Rejected", value: rejectedCount }
+    ];
+
+    doc.setFont('helvetica', 'normal');
+    summaryData.forEach((data, index) => {
+        const x = 14 + index * (boxWidth + 5);
+        doc.setFillColor(greyColor[0], greyColor[1], greyColor[2]);
+        doc.roundedRect(x, summaryY, boxWidth, boxHeight, 3, 3, 'F');
+        
+        doc.setTextColor(darkTextColor[0], darkTextColor[1], darkTextColor[2]);
+        doc.setFontSize(10);
+        doc.text(data.label, x + boxWidth / 2, summaryY + 10, { align: 'center' });
+        
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.text(String(data.value), x + boxWidth / 2, summaryY + 20, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+    });
+
+    summaryY += boxHeight + 15;
+
+    // Total Budget
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(darkTextColor[0], darkTextColor[1], darkTextColor[2]);
     doc.text(`Total Requested Budget (INR): ${totalBudget.toLocaleString('en-IN')}`, 14, summaryY);
     doc.setFont('helvetica', 'normal');
+
+    summaryY += 5;
 
     // Category-wise summary
     const categoryTotals: { [key: string]: number } = {};
@@ -53,7 +91,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
         head: [['Category', 'Total Cost (INR)']],
         body: categoryTableData,
         startY: summaryY + 5,
-        headStyles: { fillColor: [74, 74, 74] },
+        headStyles: { fillColor: darkGreyColor },
         tableWidth: 'auto',
         didDrawPage: (data) => {
             summaryY = data.cursor?.y ?? summaryY;
@@ -75,8 +113,8 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
     doc.autoTable({
         head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (INR)', 'Total Cost (INR)', 'Priority', 'Status']],
         body: tableData,
-        startY: summaryY + 5,
-        headStyles: { fillColor: [22, 163, 74] },
+        startY: summaryY + 10,
+        headStyles: { fillColor: primaryColor },
     });
 
     doc.save('procurement_requests.pdf');
