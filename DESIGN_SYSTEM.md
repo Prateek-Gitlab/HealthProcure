@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the enhanced visual design system implemented for HealthProcure, including color palettes, typography, spacing, components, and usage guidelines.
+This document outlines the enhanced visual design system implemented for HealthProcure, including color palettes, typography, spacing, components, and usage guidelines. The system is designed with a clean, modern light theme optimized for professional healthcare environments.
 
 ## 🎨 Color Palette
 
@@ -132,17 +132,6 @@ This document outlines the enhanced visual design system implemented for HealthP
 - **Success/Warning/Info/Destructive**: Semantic colored cards
 - **Glass**: Glass morphism effect
 
-## 🌙 Dark Mode
-
-### Implementation
-The design system includes comprehensive dark mode support with:
-- Automatic system preference detection
-- Manual theme switching
-- Consistent color mapping across themes
-- Enhanced contrast for accessibility
-
-### Theme Toggle
-Use the `<ThemeToggle />` component to allow users to switch themes.
 
 ## 🎬 Animations
 
@@ -193,7 +182,7 @@ All components are designed mobile-first with progressive enhancement for larger
 ## ♿ Accessibility
 
 ### Features
-- High contrast ratios in both light and dark modes
+- High contrast ratios optimized for readability
 - Focus indicators on all interactive elements
 - Screen reader friendly markup
 - Keyboard navigation support
@@ -252,8 +241,7 @@ All components are designed mobile-first with progressive enhancement for larger
 2. Update spacing using the new scale
 3. Apply new shadow and border radius utilities
 4. Implement new component variants
-5. Add theme provider to app root
-6. Test in both light and dark modes
+5. Test visual consistency across components
 
 ### Component Updates
 - Cards: Add variant props and new styling
@@ -261,4 +249,4 @@ All components are designed mobile-first with progressive enhancement for larger
 - Typography: Apply new hierarchy classes
 - Spacing: Use new spacing utilities
 
-This design system provides a solid foundation for consistent, accessible, and beautiful user interfaces across the HealthProcure application.
+This design system provides a solid foundation for consistent, accessible, and beautiful user interfaces across the HealthProcure application, with a focus on professional healthcare environments and optimal readability.

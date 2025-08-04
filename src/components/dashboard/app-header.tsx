@@ -11,7 +11,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { LogOut, User as UserIcon, HeartPulse } from "lucide-react";
 
 export function AppHeader() {
@@ -27,7 +26,6 @@ export function AppHeader() {
       </div>
       
       <div className="flex items-center gap-sm">
-        <ThemeToggle />
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
