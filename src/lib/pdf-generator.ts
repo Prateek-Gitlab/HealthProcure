@@ -54,6 +54,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
         body: categoryTableData,
         startY: summaryY + 5,
         headStyles: { fillColor: [74, 74, 74] },
+        tableWidth: 'auto',
         didDrawPage: (data) => {
             summaryY = data.cursor?.y ?? summaryY;
         }
@@ -65,7 +66,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
         req.category,
         req.itemName,
         req.quantity,
-        req.pricePerUnit ? req.pricePerUnit.toLocaleString('en-IN') : 'N/A',
+        (req.pricePerUnit ?? 0).toLocaleString('en-IN'),
         ((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-IN'),
         req.priority,
         req.status
