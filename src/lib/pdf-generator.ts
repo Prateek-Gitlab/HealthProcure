@@ -8,7 +8,7 @@ interface jsPDFWithAutoTable extends jsPDF {
     autoTable: (options: any) => jsPDF;
 }
 
-export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget: number) {
+export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget: number, userName?: string) {
     const doc = new jsPDF() as jsPDFWithAutoTable;
 
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -25,6 +25,11 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
     doc.setTextColor(textColor[0], textColor[1], textColor[2]);
     doc.setFont('helvetica', 'bold');
     doc.text("Procurement Requests Summary", 14, 18);
+    if (userName) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Generated for: ${userName}`, 14, 25);
+    }
 
     // Summary calculations
     const totalCount = requests.length;

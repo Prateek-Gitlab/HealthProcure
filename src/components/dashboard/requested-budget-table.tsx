@@ -3,6 +3,7 @@
 
 import { useMemo } from 'react';
 import type { ProcurementRequest, ProcurementCategory } from '@/lib/data';
+import { useAuth } from '@/contexts/auth-context';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -25,7 +26,8 @@ type AggregatedData = Record<ProcurementCategory, AggregatedItem[]>;
 
 
 export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
-  
+  const { user } = useAuth();
+
   const relevantRequests = useMemo(() => {
     return requests.filter(r => r.status !== 'Rejected');
   }, [requests]);
@@ -76,7 +78,7 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
   }, [aggregatedData]);
 
   const handleDownloadPdf = () => {
-    generateRequestsPdf(requests, totalBudget);
+    generateRequestsPdf(requests, totalBudget, user?.name);
   };
 
   return (
