@@ -97,7 +97,7 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
     ]));
 
     doc.autoTable({
-        head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (₹)', 'Total Cost (₹)', 'Priority', 'Status']],
+        head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (INR)', 'Total Cost (INR)', 'Priority', 'Status']],
         body: tableData,
         startY: 25,
         headStyles: { fillColor: [22, 163, 74] },
