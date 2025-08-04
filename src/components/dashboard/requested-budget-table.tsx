@@ -85,12 +85,27 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
     
     doc.text("Procurement Requests Summary", 14, 15);
 
-    const tableData = relevantRequests.map(req => ([
+    // Summary calculations
+    const totalCount = requests.length;
+    const pendingCount = requests.filter(r => r.status.startsWith('Pending')).length;
+    const approvedCount = requests.filter(r => r.status === 'Approved').length;
+    const rejectedCount = requests.filter(r => r.status === 'Rejected').length;
+
+    // Add summary text
+    const summaryY = 25;
+    doc.setFontSize(10);
+    doc.text(`Total Requests: ${totalCount}`, 14, summaryY);
+    doc.text(`Pending: ${pendingCount}`, 60, summaryY);
+    doc.text(`Approved: ${approvedCount}`, 90, summaryY);
+    doc.text(`Rejected: ${rejectedCount}`, 125, summaryY);
+
+
+    const tableData = requests.map(req => ([
         req.id,
         req.category,
         req.itemName,
         req.quantity,
-        (req.pricePerUnit || 0).toLocaleString('en-IN'),
+        req.pricePerUnit ? req.pricePerUnit.toLocaleString('en-IN') : 'N/A',
         ((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-IN'),
         req.priority,
         req.status
@@ -99,7 +114,7 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
     doc.autoTable({
         head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit (INR)', 'Total Cost (INR)', 'Priority', 'Status']],
         body: tableData,
-        startY: 25,
+        startY: summaryY + 10,
         headStyles: { fillColor: [22, 163, 74] },
     });
 
@@ -121,7 +136,7 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
                     <p className="text-sm text-muted-foreground">Total Budget</p>
                     <p className="text-2xl font-bold">₹{totalBudget.toLocaleString('en-IN')}</p>
                 </div>
-                <Button variant="outline" size="icon" onClick={handleDownloadPdf} disabled={relevantRequests.length === 0}>
+                <Button variant="outline" size="icon" onClick={handleDownloadPdf} disabled={requests.length === 0}>
                     <Download className="h-4 w-4" />
                     <span className="sr-only">Download PDF</span>
                 </Button>
@@ -148,7 +163,7 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
                                         <TableRow>
                                             <TableHead>Item</TableHead>
                                             <TableHead className="text-right">Total Quantity</TableHead>
-                                            <TableHead className="text-right">Estimated Cost (₹)</TableHead>
+                                            <TableHead className="text-right">Estimated Cost (INR)</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
