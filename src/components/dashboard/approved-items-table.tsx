@@ -124,11 +124,11 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
             {aggregatedCategories.length > 0 ? (
                 <Accordion type="multiple" className="w-full space-y-2" defaultValue={aggregatedCategories}>
                     {aggregatedCategories.map(category => (
-                        <AccordionItem value={category} key={category} className="border rounded-md">
+                        <AccordionItem value={category} key={category} className="border rounded-md bg-gradient-to-br from-card to-muted/50">
                             <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
                                 {category}
                             </AccordionTrigger>
-                            <AccordionContent className="p-0 border-t">
+                            <AccordionContent className="p-0 border-t bg-card">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
