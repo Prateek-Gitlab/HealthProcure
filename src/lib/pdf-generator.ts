@@ -33,6 +33,32 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
     doc.text(`Total Requested Budget (INR): ${totalBudget.toLocaleString('en-IN')}`, 14, summaryY);
     doc.setFont('helvetica', 'normal');
 
+    // Category-wise summary
+    const categoryTotals: { [key: string]: number } = {};
+    requests.forEach(req => {
+        const cost = (req.pricePerUnit || 0) * req.quantity;
+        if (categoryTotals[req.category]) {
+            categoryTotals[req.category] += cost;
+        } else {
+            categoryTotals[req.category] = cost;
+        }
+    });
+
+    const categoryTableData = Object.entries(categoryTotals).map(([category, total]) => ([
+        category,
+        total.toLocaleString('en-IN')
+    ]));
+
+    doc.autoTable({
+        head: [['Category', 'Total Cost (INR)']],
+        body: categoryTableData,
+        startY: summaryY + 5,
+        headStyles: { fillColor: [74, 74, 74] },
+        didDrawPage: (data) => {
+            summaryY = data.cursor?.y ?? summaryY;
+        }
+    });
+
 
     const tableData = requests.map(req => ([
         req.id,
