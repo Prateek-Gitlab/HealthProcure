@@ -1,10 +1,10 @@
 
-import type { ProcurementRequest, Role, RequestStatus } from "@/lib/data";
+import type { ProcurementRequest, Role } from "@/lib/data";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { FileClock, CheckCircle2, XCircle, ListTodo } from "lucide-react";
 
-type FilterStatus = RequestStatus | 'all' | 'pending' | 'approved-by-me';
+type FilterStatus = 'all' | 'pending' | 'approved-by-me' | 'Rejected';
 
 interface StatsCardsProps {
   requests: ProcurementRequest[];
@@ -19,7 +19,6 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
     switch(userRole) {
       case 'state':
       case 'district':
-        return requests.filter(r => r.status === 'Pending Taluka Approval').length;
       case 'taluka':
         return requests.filter(r => r.status === 'Pending Taluka Approval').length;
       case 'base':
@@ -44,7 +43,6 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   const getPendingLabel = () => {
     if (userRole === 'base') return 'My Pending Requests';
     if (userRole === 'taluka') return 'Pending Your Approval';
-    if (userRole === 'district') return 'Total Pending Approval at Taluka Level';
     return 'Pending Approval';
   }
 
@@ -53,72 +51,78 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   }
 
   const cardStyle = (filter: FilterStatus) => cn(
-    "transition-all cursor-pointer hover:border-primary/50",
-    activeFilter === filter && "border-primary ring-2 ring-primary",
+    "transition-all cursor-pointer hover:shadow-md",
+    activeFilter === filter ? "bg-primary text-primary-foreground" : "bg-card",
   );
+
+  const iconStyle = (filter: FilterStatus) => cn(
+    "p-2 rounded-full",
+    activeFilter === filter ? "bg-primary-foreground/20 text-primary-foreground" : "bg-secondary"
+  )
   
   const handleCardClick = (filter: FilterStatus) => {
     onFilterChange(filter);
   }
 
-  const gridClass = "grid gap-4 md:grid-cols-2 lg:grid-cols-4";
+  const cardsData = [
+    {
+      id: 'all',
+      title: 'Total Requests',
+      value: totalRequests,
+      description: userRole === 'base' ? 'Requests you submitted' : 'Requests in your purview',
+      Icon: ListTodo,
+      iconColor: 'text-muted-foreground'
+    },
+    {
+      id: 'pending',
+      title: getPendingLabel(),
+      value: pendingRequests,
+      description: 'Awaiting action',
+      Icon: FileClock,
+      iconColor: 'text-muted-foreground'
+    },
+    {
+      id: 'approved-by-me',
+      title: getApprovedLabel(),
+      value: approvedByMeRequests,
+      description: 'Completed requests',
+      Icon: CheckCircle2,
+      iconColor: 'text-green-500'
+    },
+    {
+      id: 'Rejected',
+      title: 'Rejected',
+      value: rejectedRequests,
+      description: 'Requires revision',
+      Icon: XCircle,
+      iconColor: 'text-red-500'
+    },
+  ];
 
   return (
-    <div className={gridClass}>
-      <Card className={cardStyle('all')} onClick={() => handleCardClick('all')}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Requests</CardTitle>
-          <ListTodo className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalRequests}</div>
-          <p className="text-xs text-muted-foreground">
-            {userRole === 'base' ? 'Requests you submitted' : 'Requests in your purview'}
-          </p>
-        </CardContent>
-      </Card>
-      
-      <Card 
-        className={cardStyle('pending')} 
-        onClick={() => handleCardClick('pending')}
-      >
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{getPendingLabel()}</CardTitle>
-          <FileClock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{pendingRequests}</div>
-          <p className="text-xs text-muted-foreground">
-            Awaiting action
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className={cardStyle('approved-by-me')} onClick={() => handleCardClick('approved-by-me')}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{getApprovedLabel()}</CardTitle>
-          <CheckCircle2 className="h-4 w-4 text-green-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{approvedByMeRequests}</div>
-          <p className="text-xs text-muted-foreground">
-            Completed requests
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className={cardStyle('Rejected')} onClick={() => handleCardClick('Rejected')}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-          <XCircle className="h-4 w-4 text-red-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{rejectedRequests}</div>
-          <p className="text-xs text-muted-foreground">
-            Requires revision
-          </p>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {cardsData.map(card => (
+        <Card 
+          key={card.id}
+          className={cardStyle(card.id as FilterStatus)} 
+          onClick={() => handleCardClick(card.id as FilterStatus)}
+        >
+          <CardHeader>
+            <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+          </CardHeader>
+          <CardContent className="flex items-end justify-between">
+            <div>
+              <div className="text-2xl font-bold">{card.value}</div>
+              <p className={cn("text-xs", activeFilter === card.id ? "text-primary-foreground/80" : "text-muted-foreground")}>
+                {card.description}
+              </p>
+            </div>
+            <div className={iconStyle(card.id as FilterStatus)}>
+                <card.Icon className={cn("h-5 w-5", activeFilter !== card.id && card.iconColor)} />
+            </div>
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }
