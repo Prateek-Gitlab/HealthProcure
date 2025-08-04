@@ -86,7 +86,7 @@ export function RequestDetailsSheet({
                     <Separator />
 
                     <div>
-                        <h3 className="font-semibold mb-4">Professional Changelog</h3>
+                        <h3 className="font-semibold mb-4">Request Log</h3>
                         <div className="space-y-4">
                             {request.auditLog.map((log, index) => (
                                 <div key={index} className="flex items-start gap-4 text-sm">
