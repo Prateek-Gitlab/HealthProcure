@@ -7,6 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 interface RequestedBudgetTableProps {
   requests: ProcurementRequest[];
@@ -20,12 +24,18 @@ interface AggregatedItem {
 
 type AggregatedData = Record<ProcurementCategory, AggregatedItem[]>;
 
+// Extend jsPDF with autoTable plugin
+interface jsPDFWithAutoTable extends jsPDF {
+    autoTable: (options: any) => jsPDF;
+}
+
 export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
   
+  const relevantRequests = useMemo(() => {
+    return requests.filter(r => r.status !== 'Rejected');
+  }, [requests]);
+
   const aggregatedData: AggregatedData = useMemo(() => {
-    // Only include requests that are not rejected.
-    const relevantRequests = requests.filter(r => r.status !== 'Rejected');
-    
     const itemsMap = new Map<string, AggregatedItem & { category: ProcurementCategory }>();
 
     relevantRequests.forEach(request => {
@@ -56,12 +66,11 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
             totalQuantity: item.totalQuantity,
             totalCost: item.totalCost
         });
-        // Sort items within category by total cost
         acc[item.category].sort((a, b) => b.totalCost - a.totalCost);
         return acc;
     }, {} as AggregatedData);
 
-  }, [requests]);
+  }, [relevantRequests]);
 
   const aggregatedCategories = Object.keys(aggregatedData) as ProcurementCategory[];
   
@@ -70,6 +79,32 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
       .flat()
       .reduce((sum, item) => sum + item.totalCost, 0);
   }, [aggregatedData]);
+
+  const handleDownloadPdf = () => {
+    const doc = new jsPDF() as jsPDFWithAutoTable;
+    
+    doc.text("Procurement Requests Summary", 14, 15);
+
+    const tableData = relevantRequests.map(req => ([
+        req.id,
+        req.category,
+        req.itemName,
+        req.quantity,
+        `₹${(req.pricePerUnit || 0).toLocaleString('en-IN')}`,
+        `₹${((req.pricePerUnit || 0) * req.quantity).toLocaleString('en-IN')}`,
+        req.priority,
+        req.status
+    ]));
+
+    doc.autoTable({
+        head: [['ID', 'Category', 'Item', 'Quantity', 'Price/Unit', 'Total Cost', 'Priority', 'Status']],
+        body: tableData,
+        startY: 25,
+        headStyles: { fillColor: [22, 163, 74] },
+    });
+
+    doc.save('procurement_requests.pdf');
+  };
 
   return (
     <Card className="flex flex-col h-full">
@@ -81,9 +116,15 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
                 A summary of the total estimated budget for all items you have requested.
                 </CardDescription>
             </div>
-            <div className="text-right">
-                <p className="text-sm text-muted-foreground">Total Budget</p>
-                <p className="text-2xl font-bold">₹{totalBudget.toLocaleString('en-IN')}</p>
+            <div className="flex items-center gap-4">
+                <div className="text-right">
+                    <p className="text-sm text-muted-foreground">Total Budget</p>
+                    <p className="text-2xl font-bold">₹{totalBudget.toLocaleString('en-IN')}</p>
+                </div>
+                <Button variant="outline" size="icon" onClick={handleDownloadPdf} disabled={relevantRequests.length === 0}>
+                    <Download className="h-4 w-4" />
+                    <span className="sr-only">Download PDF</span>
+                </Button>
             </div>
         </div>
       </CardHeader>
