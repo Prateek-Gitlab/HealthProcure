@@ -32,6 +32,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   const { toast } = useToast();
 
   const totalApprovedBudget = useMemo(() => {
+    // State-level overview card should only reflect Approved requests
     return requests
       .filter(r => r.status === 'Approved')
       .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
@@ -200,11 +201,11 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
 
   return (
     <div className="space-y-6">
-      <StatsCards 
+      <StatsCards
         requests={allUserRequests}
         userRole={user.role}
-        activeFilter={filterStatus as FilterStatus}
-        onFilterChange={(f: FilterStatus) => setFilterStatus(f)}
+        activeFilter={filterStatus}
+        onFilterChange={setFilterStatus}
       />
 
       {user.role === 'district' && (

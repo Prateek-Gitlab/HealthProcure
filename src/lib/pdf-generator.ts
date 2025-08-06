@@ -54,15 +54,15 @@ export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: Us
 
     let tableY = 40;
 
-    // 1. Total Budget Requirement
+    // 1. Total Approved Budget Requirement
     const totalBudget = districtRequests
-        .filter(r => r.status !== 'Rejected')
+        .filter(r => r.status === 'Approved')
         .reduce((sum, req) => sum + ((req.pricePerUnit || 0) * req.quantity), 0);
 
     doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(darkTextColor[0], darkTextColor[1], darkTextColor[2]);
-    doc.text(`Total Requested Budget (INR): ${totalBudget.toLocaleString('en-IN')}`, 14, tableY);
+    doc.text(`Total Approved Budget (INR): ${totalBudget.toLocaleString('en-IN')}`, 14, tableY);
     tableY += 10;
 
     // 2. Budget bifurcation by Talukas
@@ -71,7 +71,7 @@ export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: Us
     const talukaBudgets = talukaUsers.map(taluka => {
         const talukaSubordinateIds = getSubordinateIds(taluka.id, allUsers);
         const talukaBudget = districtRequests
-            .filter(r => talukaSubordinateIds.includes(r.submittedBy) && r.status !== 'Rejected')
+            .filter(r => talukaSubordinateIds.includes(r.submittedBy) && r.status === 'Approved')
             .reduce((sum, req) => sum + ((req.pricePerUnit || 0) * req.quantity), 0);
         return [taluka.name, talukaBudget.toLocaleString('en-IN')];
     });
@@ -82,7 +82,7 @@ export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: Us
     tableY += 8;
 
     doc.autoTable({
-        head: [['Taluka', 'Total Cost (INR)']],
+        head: [['Taluka', 'Approved Cost (INR)']],
         body: talukaBudgets,
         startY: tableY,
         headStyles: { fillColor: darkGreyColor, textColor: [255,255,255] },
@@ -92,7 +92,8 @@ export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: Us
         },
     });
 
-    tableY = doc.autoTable.previous.finalY + 15;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    tableY = (doc as any).autoTable.previous.finalY + 15;
 
 
     // 3. Approved Items Summary
@@ -159,7 +160,8 @@ export function generateDistrictPdf(requests: ProcurementRequest[], allUsers: Us
                     lineColor: [200, 200, 200]
                 },
             });
-            tableY = doc.autoTable.previous.finalY + 10;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            tableY = (doc as any).autoTable.previous.finalY + 10;
         });
     } else {
         doc.setFontSize(10);
@@ -255,7 +257,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
                 lineColor: [200, 200, 200]
             },
             tableWidth: 'auto',
-            didDrawPage: (data) => {
+            didDrawPage: (data: any) => {
                 summaryY = data.cursor?.y ?? summaryY;
             }
         });
@@ -288,7 +290,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
             lineColor: [200, 200, 200]
         },
         tableWidth: 'auto',
-        didDrawPage: (data) => {
+        didDrawPage: (data: any) => {
             summaryY = data.cursor?.y ?? summaryY;
         }
     });
@@ -337,7 +339,7 @@ export function generateRequestsPdf(requests: ProcurementRequest[], totalBudget:
                 lineWidth: 0.1,
                 lineColor: [200, 200, 200]
             },
-            didDrawPage: (data) => {
+            didDrawPage: (data: any) => {
                 tableY = data.cursor?.y ?? tableY;
             }
         });
