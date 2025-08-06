@@ -130,7 +130,7 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
       <CardContent className="flex-1">
         <ScrollArea className="h-full max-h-96">
             {aggregatedCategories.length > 0 ? (
-                <Accordion type="multiple" className="w-full space-y-2" defaultValue={aggregatedCategories}>
+                <Accordion type="multiple" className="w-full space-y-2">
                     {aggregatedCategories.map((category) => (
                       <AccordionItem
                         value={category}

@@ -146,6 +146,12 @@ export function AnalyticsChart({ requests, allUsers, currentUser, selectedFilter
     ? "Category" 
     : (isStateUser ? "District" : "Taluka");
 
+  const formatIndianCurrencyCompact = (value: number) => {
+    if (value >= 10000000) return `₹${(value / 10000000).toFixed(2)} Cr`;
+    if (value >= 100000) return `₹${(value / 100000).toFixed(2)} L`;
+    return `₹${Number(value).toLocaleString('en-IN')}`;
+  };
+
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
@@ -202,7 +208,7 @@ export function AnalyticsChart({ requests, allUsers, currentUser, selectedFilter
                   tickFormatter={(value) => `₹${Number(value).toLocaleString()}`}
                 />
                 <Tooltip
-                  formatter={(value) => [`₹${Number(value).toLocaleString()}`, "Total Cost"]}
+                  formatter={(value) => [formatIndianCurrencyCompact(Number(value)), "Total Cost"]}
                   cursor={{ fill: "hsl(var(--secondary))" }}
                 />
                 <Legend />

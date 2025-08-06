@@ -2,7 +2,7 @@
 "use client";
 
 import { useMemo } from 'react';
-import type { ProcurementRequest } from '@/lib/data';
+import type { ProcurementRequest, ProcurementCategory } from '@/lib/data';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
 
@@ -13,14 +13,26 @@ interface CategoryPieChartProps {
   showApprovedOnly?: boolean;
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
+/**
+ * Use the same palette mapping as Approved Items list by category.
+ * Map categories deterministically to colors so state/district views align.
+ */
+const CATEGORY_COLORS: Record<ProcurementCategory, string> = {
+  // Slightly darker for better visibility, matching ~400 range tints
+  HR: '#34d399',             // emerald-400
+  Infrastructure: '#fbbf24', // amber-400
+  Equipment: '#60a5fa',      // blue-400
+  Training: '#fb923c',       // orange-400
+};
+// For fallback in case category order changes unexpectedly
+const DEFAULT_COLORS = ['#60a5fa', '#10b981', '#f59e0b', '#f97316'];
 
 const formatCurrency = (value: number) => {
     if (value >= 10000000) { // 1 Crore
         return `₹${(value / 10000000).toFixed(2)} Cr`;
     }
     if (value >= 100000) { // 1 Lakh
-        return `₹${(value / 100000).toFixed(2)} Lacs`;
+        return `₹${(value / 100000).toFixed(2)} L`;
     }
     return `₹${value.toLocaleString('en-IN')}`;
 }
@@ -34,7 +46,8 @@ export function CategoryPieChart({
   const chartData = useMemo(() => {
     const relevantRequests = showApprovedOnly ? requests.filter(r => r.status === 'Approved') : requests;
 
-    const dataByCategory = (['HR', 'Infrastructure', 'Equipment', 'Training'] as const).map(category => {
+    const orderedCategories = ['HR', 'Infrastructure', 'Equipment', 'Training'] as const;
+    const dataByCategory = orderedCategories.map(category => {
       const categoryCost = relevantRequests
         .filter(req => req.category === category)
         .reduce((acc, req) => acc + (req.pricePerUnit || 0) * req.quantity, 0);
@@ -65,12 +78,14 @@ export function CategoryPieChart({
                 dataKey="value"
                 nameKey="name"
               >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
+                {chartData.map((entry, index) => {
+                  const key = entry.name as ProcurementCategory;
+                  const fill = CATEGORY_COLORS[key] ?? DEFAULT_COLORS[index % DEFAULT_COLORS.length];
+                  return <Cell key={`cell-${index}`} fill={fill} />;
+                })}
               </Pie>
-              <Tooltip 
-                formatter={(value: number) => [formatCurrency(value), 'Cost']}
+              <Tooltip
+                formatter={(value: number) => [formatCurrency(value as number), 'Cost']}
               />
               <Legend />
             </PieChart>
