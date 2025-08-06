@@ -19,15 +19,15 @@ export function RequestStatusStepper({
   auditLog,
 }: RequestStatusStepperProps) {
   const steps = [
-    { key: "submitted", label: "Submitted" },
-    { key: "taluka", label: "Taluka Approval" },
+    { key: "submitted", label: "Request Submitted" },
+    { key: "taluka", label: "THO Status" },
     { key: "final", label: currentStatus === "Approved" ? "Approved" : "Rejected" },
   ] as const;
 
   const indexForStatus = () => {
     if (currentStatus === "Rejected") return 2;
     if (currentStatus === "Approved") return 2;
-    // Pending Taluka Approval
+    // Pending THO Approval Status
     return 1;
   };
 
@@ -37,6 +37,9 @@ export function RequestStatusStepper({
   // Completed means the step index is strictly before the active one
   const isCompleted = (idx: number) => idx < activeIndex;
   const isCurrent = (idx: number) => idx === activeIndex;
+
+  // THO pending is when we're on the THO step (index 1) and not approved/rejected
+  const isTHOPending = activeIndex === 1 && !isRejected && currentStatus !== "Approved";
 
   const progressWidth = (() => {
     switch (activeIndex) {
@@ -73,10 +76,18 @@ export function RequestStatusStepper({
               : isCurrent(idx)
               ? "bg-destructive text-destructive-foreground border-destructive"
               : "bg-muted text-muted-foreground border-border"
-            : isCompleted(idx)
+            : // Non-rejected flow
+            isCompleted(idx)
             ? "bg-primary/10 text-primary border-primary/30"
             : isCurrent(idx)
-            ? "bg-primary text-primary-foreground border-primary"
+            ? // Highlight current step:
+              // - THO when pending: soft yellow
+              // - Submitted when current: blue emphasis for clarity
+              (idx === 1 && isTHOPending)
+                ? "bg-warning/20 text-warning border-warning/40"
+                : idx === 0
+                ? "bg-info text-info-foreground border-info"
+                : "bg-primary text-primary-foreground border-primary"
             : "bg-muted text-muted-foreground border-border";
 
           return (
