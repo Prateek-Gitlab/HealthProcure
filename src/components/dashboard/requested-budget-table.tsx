@@ -14,6 +14,7 @@ import { generateRequestsPdf } from '@/lib/pdf-generator';
 
 interface RequestedBudgetTableProps {
   requests: ProcurementRequest[];
+  className?: string;
 }
 
 interface AggregatedItem {
@@ -25,7 +26,16 @@ interface AggregatedItem {
 type AggregatedData = Record<ProcurementCategory, AggregatedItem[]>;
 
 
-export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
+import { cn } from "@/lib/utils";
+
+const categoryGradients: Record<ProcurementCategory, string> = {
+  Equipment: "from-chart-4/10 to-chart-4/5",
+  HR: "from-chart-2/10 to-chart-2/5",
+  Infrastructure: "from-chart-3/10 to-chart-3/5",
+  Training: "from-chart-5/10 to-chart-5/5",
+};
+
+export function RequestedBudgetTable({ requests, className }: RequestedBudgetTableProps) {
   const { user, allUsers } = useAuth();
 
   const relevantRequests = useMemo(() => {
@@ -107,16 +117,27 @@ export function RequestedBudgetTable({ requests }: RequestedBudgetTableProps) {
         <ScrollArea className="h-full max-h-96">
             {aggregatedCategories.length > 0 ? (
                 <Accordion type="multiple" className="w-full space-y-2">
-                    {aggregatedCategories.map(category => {
-                        const categoryTotal = aggregatedData[category].reduce((sum, item) => sum + item.totalCost, 0);
-                        return (
-                        <AccordionItem value={category} key={category} className="border rounded-md">
-                            <AccordionTrigger className="p-4 text-base font-medium hover:no-underline">
-                                <div className="flex justify-between w-full pr-4">
-                                    <span>{category}</span>
-                                    <span className="font-semibold">₹{categoryTotal.toLocaleString('en-IN')}</span>
-                                </div>
-                            </AccordionTrigger>
+                  {aggregatedCategories.map(category => {
+                    const categoryTotal = aggregatedData[category].reduce((sum, item) => sum + item.totalCost, 0);
+                    const gradientHeader = className?.includes("bp-gradient-categories");
+                    return (
+                    <AccordionItem
+                      value={category}
+                      key={category}
+                      className={cn("border rounded-md bg-gradient-to-br", "from-card to-muted/50")}
+                    >
+                      <AccordionTrigger
+                        className={cn(
+                          "p-4 text-base font-medium hover:no-underline bg-gradient-to-r rounded-t-md",
+                          "from-transparent to-transparent",
+                          gradientHeader ? `bg-gradient-to-r ${categoryGradients[category]}` : ""
+                        )}
+                      >
+                        <div className="flex justify-between w-full pr-4">
+                          <span>{category}</span>
+                          <span className="font-semibold">₹{categoryTotal.toLocaleString('en-IN')}</span>
+                        </div>
+                      </AccordionTrigger>
                             <AccordionContent className="p-0 border-t">
                                 <Table>
                                     <TableHeader>

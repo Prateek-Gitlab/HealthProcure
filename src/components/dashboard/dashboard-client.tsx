@@ -50,7 +50,7 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   };
 
   const handleSubmitStagedRequests = async (stagedRequests: StagedRequest[]) => {
-    if (!user) return;
+    if (!user) return false;
     
     try {
         const addedRequestsPromises = stagedRequests.map((req) =>
@@ -201,10 +201,10 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
   return (
     <div className="space-y-6">
       <StatsCards 
-        requests={allUserRequests} 
-        userRole={user.role} 
-        activeFilter={filterStatus}
-        onFilterChange={setFilterStatus}
+        requests={allUserRequests}
+        userRole={user.role}
+        activeFilter={filterStatus as FilterStatus}
+        onFilterChange={(f: FilterStatus) => setFilterStatus(f)}
       />
 
       {user.role === 'district' && (
@@ -251,7 +251,12 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
             <StagedRequests onSubmit={handleSubmitStagedRequests} />
             <Separator />
             <div className="pt-6">
-                <RequestedBudgetTable requests={allUserRequests} />
+                {/* My requested budget bifurcation with gradient-highlighted categories for base users */}
+                <RequestedBudgetTable
+                  requests={allUserRequests}
+                  // Pass a hint class so the table can render gradient category headers similar to state/district
+                  className="bp-gradient-categories"
+                />
             </div>
         </>
       )}
