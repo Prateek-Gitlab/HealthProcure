@@ -150,38 +150,42 @@ export function AnalyticsChart({ requests, allUsers, currentUser, selectedFilter
     <Card className="flex flex-col h-full">
       <CardHeader>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div>
-                <CardTitle>Approved Request Analytics</CardTitle>
-                <CardDescription>{cardDescription()}</CardDescription>
-            </div>
-            <div className="flex gap-2">
-                <Select value={selectedFilterId} onValueChange={onFilterChange}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder={isStateUser ? "Select District" : "Select Taluka"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">{isStateUser ? 'All Districts' : 'All Talukas'}</SelectItem>
-                        {(isStateUser ? subordinateDistricts : subordinateTalukas).map(item => (
-                            <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Select 
-                    value={selectedCategory} 
-                    onValueChange={(value) => setSelectedCategory(value as ProcurementCategory | 'all')}
-                    disabled={isSingleTalukaViewForDistrictUser || isSingleDistrictViewForStateUser}
-                >
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Categories</SelectItem>
-                        {procurementCategories.map(c => (
-                            <SelectItem key={c} value={c}>{c}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+          <div>
+            <CardTitle className="text-gradient">Approved Request Analytics</CardTitle>
+            <CardDescription>{cardDescription()}</CardDescription>
+          </div>
+          <div className="flex gap-2">
+            <Select value={selectedFilterId} onValueChange={onFilterChange}>
+              <SelectTrigger className="w-[200px] rounded-custom">
+                <SelectValue placeholder={isStateUser ? "Select District" : "Select Taluka"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{isStateUser ? "All Districts" : "All Talukas"}</SelectItem>
+                {(isStateUser ? subordinateDistricts : subordinateTalukas).map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={selectedCategory}
+              onValueChange={(value) => setSelectedCategory(value as ProcurementCategory | "all")}
+              disabled={isSingleTalukaViewForDistrictUser || isSingleDistrictViewForStateUser}
+            >
+              <SelectTrigger className="w-[200px] rounded-custom">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {procurementCategories.map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="flex-1 flex items-center justify-center">
@@ -189,26 +193,20 @@ export function AnalyticsChart({ requests, allUsers, currentUser, selectedFilter
           <div className="w-full h-full min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>
-                <XAxis
-                  dataKey="name"
-                  stroke="#888888"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
                 <YAxis
-                  stroke="#888888"
+                  stroke="#94a3b8"
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(value) => `₹${Number(value).toLocaleString()}`}
                 />
-                <Tooltip 
-                  formatter={(value) => [`₹${Number(value).toLocaleString()}`, 'Total Cost']}
-                  cursor={{ fill: 'hsl(var(--secondary))' }}
+                <Tooltip
+                  formatter={(value) => [`₹${Number(value).toLocaleString()}`, "Total Cost"]}
+                  cursor={{ fill: "hsl(var(--secondary))" }}
                 />
                 <Legend />
-                <Bar dataKey="totalCost" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Total Cost" />
+                <Bar dataKey="totalCost" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} name="Total Cost" />
               </BarChart>
             </ResponsiveContainer>
           </div>

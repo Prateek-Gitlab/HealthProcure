@@ -1,144 +1,110 @@
 
 import { cn } from "@/lib/utils";
 import type { RequestStatus, ProcurementRequest } from "@/lib/data";
-import { Check, Hourglass, ThumbsUp, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 interface RequestStatusStepperProps {
   currentStatus: RequestStatus;
-  auditLog: ProcurementRequest['auditLog'];
+  auditLog: ProcurementRequest["auditLog"];
 }
 
+/**
+ * Modern horizontal stepper with gradient progress bar and pill steps.
+ * - Minimal icons
+ * - Clear progress indicator
+ * - Compact labels
+ */
 export function RequestStatusStepper({
   currentStatus,
-  auditLog
+  auditLog,
 }: RequestStatusStepperProps) {
-
-  const finalStepName = currentStatus === "Approved" ? "Request Approved" : "Request Rejected";
-  
   const steps = [
-    { name: "Submitted", statuses: [] as RequestStatus[] },
-    {
-      name: "Taluka Approval",
-      statuses: ["Pending Taluka Approval", "Approved"],
-    },
-    { name: finalStepName, statuses: currentStatus === "Rejected" ? ["Rejected"] : ["Approved"] },
-  ];
+    { key: "submitted", label: "Submitted" },
+    { key: "taluka", label: "Taluka Approval" },
+    { key: "final", label: currentStatus === "Approved" ? "Approved" : "Rejected" },
+  ] as const;
 
-  const getStepStatus = (stepName: string) => {
-    if (currentStatus === "Rejected") {
-      if (stepName === "Submitted") return "completed";
-      
-      const talukaRejection = auditLog.find(l => l.action.toLowerCase() === 'rejected');
-
-      if (stepName === "Taluka Approval") {
-          return talukaRejection ? "rejected" : "completed";
-      }
-
-      if(stepName === "Request Rejected") return "rejected";
-      return "upcoming";
-    }
-
-    if (stepName === "Submitted") return "completed";
-    if (stepName === "Request Approved") {
-      return currentStatus === "Approved" ? "completed" : "upcoming";
-    }
-
-    const step = steps.find((s) => s.name === stepName);
-    if (!step) return "upcoming";
-
-    if (currentStatus.replace(/ /g, '').includes(step.name.replace(/ /g, ''))) return "current";
-    if (step.statuses.includes(currentStatus)) return "completed";
-    
-    // Check if a future step is the current one.
-    const currentStepIndex = steps.findIndex(s => getStepStatus(s.name) === 'current');
-    const thisStepIndex = steps.findIndex(s => s.name === stepName);
-
-    if (currentStepIndex !== -1 && thisStepIndex < currentStepIndex) {
-        return "completed";
-    }
-
-    return "upcoming";
+  const indexForStatus = () => {
+    if (currentStatus === "Rejected") return 2;
+    if (currentStatus === "Approved") return 2;
+    // Pending Taluka Approval
+    return 1;
   };
 
-  const getIcon = (stepName: string) => {
-    const status = getStepStatus(stepName);
-    
-    if (status === "rejected") return <X className="h-5 w-5" />;
-    
-    if (currentStatus === "Approved" && stepName === "Request Approved") {
-        return <ThumbsUp className="h-5 w-5" />;
-    }
+  const activeIndex = indexForStatus() as 0 | 1 | 2;
 
-    switch (status) {
-      case "completed":
-        return <Check className="h-5 w-5" />;
-      case "current":
-        return <Hourglass className="h-5 w-5 animate-spin" />;
+  const isRejected = currentStatus === "Rejected";
+  // Completed means the step index is strictly before the active one
+  const isCompleted = (idx: number) => idx < activeIndex;
+  const isCurrent = (idx: number) => idx === activeIndex;
+
+  const progressWidth = (() => {
+    switch (activeIndex) {
+      case 0:
+        return "10%";
+      case 1:
+        return "55%";
       default:
-        return <div className="h-2.5 w-2.5 bg-border rounded-full" />;
+        return "100%";
     }
-  };
-
-  const getIconColor = (stepName: string) => {
-    const status = getStepStatus(stepName);
-    if (status === "rejected")
-      return "bg-destructive text-destructive-foreground";
-    if (status === "completed") return "bg-primary text-primary-foreground";
-    if (status === "current") return "bg-yellow-400 text-yellow-900";
-    return "bg-secondary text-secondary-foreground";
-  };
-
-  const isConnectorCompleted = (stepIndex: number) => {
-    if (stepIndex >= steps.length - 1) return false;
-
-    const nextStepName = steps[stepIndex + 1].name;
-    const nextStepStatus = getStepStatus(nextStepName);
-
-    if(currentStatus === 'Rejected') {
-        return getStepStatus(steps[stepIndex].name) === 'completed' && nextStepStatus !== 'upcoming';
-    }
-
-    return nextStepStatus === 'completed' || nextStepStatus === 'current';
-  };
+  })();
 
   return (
-    <nav aria-label="Progress">
-      <ol role="list" className="flex items-start">
-        {steps.map((step, stepIdx) => (
-          <li
-            key={step.name}
-            className={cn("relative", stepIdx === steps.length - 1 ? "flex-shrink-0" : "flex-1")}
-          >
-              {stepIdx < steps.length - 1 ? (
-                <div
-                  className={cn(
-                    "absolute left-4 top-4 -ml-px mt-px h-0.5 w-full",
-                     // Hide line for rejected requests unless it's the first connector
-                    (currentStatus === 'Rejected' && stepIdx > 0) ? 'hidden' : ''
-                  )}
-                  aria-hidden="true"
-                >
-                  <div className={cn("h-full w-full", isConnectorCompleted(stepIdx) ? 'bg-primary' : 'bg-border')} />
-                </div>
-              ) : null}
-              <div className="relative flex flex-col items-center gap-2">
-                <div
-                  className={cn(
-                    "relative z-10 flex h-9 w-9 items-center justify-center rounded-full",
-                    getIconColor(step.name)
-                  )}
-                >
-                  {getIcon(step.name)}
-                </div>
-                <div className="text-xs text-center">
-                  {step.name.split(" ").map((word) => (
-                    <div key={word}>{word}</div>
-                  ))}
-                </div>
-              </div>
-          </li>
-        ))}
-      </ol>
-    </nav>
+    <div className="w-full">
+      {/* Gradient progress rail */}
+      <div className="relative h-2 w-full rounded-full bg-muted overflow-hidden mb-6">
+        <div
+          className={cn(
+            "absolute left-0 top-0 h-full rounded-full transition-all",
+            isRejected ? "bg-destructive" : "bg-gradient-primary"
+          )}
+          style={{ width: progressWidth }}
+        />
+      </div>
+
+      {/* Pills */}
+      <div className="grid grid-cols-3 gap-3">
+        {steps.map((s, idx) => {
+          const pillBase =
+            "flex items-center justify-center gap-2 rounded-full px-3 py-2 text-xs font-medium border transition-all";
+          const pillState = isRejected
+            ? isCompleted(idx)
+              ? "bg-destructive/10 text-destructive border-destructive/30"
+              : isCurrent(idx)
+              ? "bg-destructive text-destructive-foreground border-destructive"
+              : "bg-muted text-muted-foreground border-border"
+            : isCompleted(idx)
+            ? "bg-primary/10 text-primary border-primary/30"
+            : isCurrent(idx)
+            ? "bg-primary text-primary-foreground border-primary"
+            : "bg-muted text-muted-foreground border-border";
+
+          return (
+            <div key={s.key} className={cn(pillBase, pillState)}>
+              {isRejected && idx === activeIndex ? (
+                <X className="h-4 w-4" />
+              ) : isCompleted(idx) || isCurrent(idx) ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <div className="h-2 w-2 rounded-full bg-border" />
+              )}
+              <span>{s.label}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Optional compact audit context */}
+      {auditLog?.length > 0 && (
+        <div className="mt-4 text-xs text-muted-foreground">
+          Last action:{" "}
+          <span className="font-medium">
+            {auditLog[auditLog.length - 1].user}
+          </span>{" "}
+          {auditLog[auditLog.length - 1].action.toLowerCase()} •{" "}
+          {new Date(auditLog[auditLog.length - 1].date).toLocaleString()}
+        </div>
+      )}
+    </div>
   );
 }

@@ -43,10 +43,10 @@ const getTitleAndDescription = (role: Role) => {
 }
 
 const categoryColors: Record<ProcurementCategory, string> = {
-    'Equipment': 'bg-blue-100/50 hover:bg-blue-200/50 text-blue-800',
-    'HR': 'bg-green-100/50 hover:bg-green-200/50 text-green-800',
-    'Infrastructure': 'bg-orange-100/50 hover:bg-orange-200/50 text-orange-800',
-    'Training': 'bg-purple-100/50 hover:bg-purple-200/50 text-purple-800',
+  Equipment: "from-chart-4/10 to-chart-4/5",
+  HR: "from-chart-2/10 to-chart-2/5",
+  Infrastructure: "from-chart-3/10 to-chart-3/5",
+  Training: "from-chart-5/10 to-chart-5/5",
 };
 
 export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTableProps) {
@@ -131,38 +131,46 @@ export function ApprovedItemsTable({ requests, currentUser }: ApprovedItemsTable
         <ScrollArea className="h-full max-h-96">
             {aggregatedCategories.length > 0 ? (
                 <Accordion type="multiple" className="w-full space-y-2" defaultValue={aggregatedCategories}>
-                    {aggregatedCategories.map(category => (
-                        <AccordionItem value={category} key={category} className={cn(
-                          "border rounded-md",
-                          currentUser.role === 'state' ? 'bg-gradient-to-br from-card to-muted/50' : ''
-                        )}>
-                            <AccordionTrigger className={cn(
-                              "p-4 text-base font-medium hover:no-underline",
-                              currentUser.role === 'state' ? categoryColors[category] : ''
-                            )}>
-                                {category}
-                            </AccordionTrigger>
-                            <AccordionContent className="p-0 border-t bg-card">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Item</TableHead>
-                                            <TableHead className="text-right">Total Quantity</TableHead>
-                                            <TableHead className="text-right">Estimated Cost (₹)</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {aggregatedData[category].map(item => (
-                                            <TableRow key={item.itemName}>
-                                                <TableCell className="font-medium">{item.itemName}</TableCell>
-                                                <TableCell className="text-right">{item.totalQuantity.toLocaleString()}</TableCell>
-                                                <TableCell className="text-right">{item.totalCost.toLocaleString('en-IN')}</TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            </AccordionContent>
-                        </AccordionItem>
+                    {aggregatedCategories.map((category) => (
+                      <AccordionItem
+                        value={category}
+                        key={category}
+                        className={cn("border rounded-md bg-gradient-to-br", `from-card to-muted/50`)}
+                      >
+                        <AccordionTrigger
+                          className={cn(
+                            "p-4 text-base font-medium hover:no-underline bg-gradient-to-r rounded-t-md",
+                            `from-transparent to-transparent`,
+                            currentUser.role === "state" || currentUser.role === "district"
+                              ? `bg-gradient-to-r ${categoryColors[category]}`
+                              : ""
+                          )}
+                        >
+                          {category}
+                        </AccordionTrigger>
+                        <AccordionContent className="p-0 border-t bg-card">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-secondary/40">
+                                <TableHead>Item</TableHead>
+                                <TableHead className="text-right">Total Quantity</TableHead>
+                                <TableHead className="text-right">Estimated Cost (₹)</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {aggregatedData[category].map((item, idx) => (
+                                <TableRow key={item.itemName} className={cn(idx % 2 === 0 ? "bg-white" : "bg-muted/30")}>
+                                  <TableCell className="font-medium">{item.itemName}</TableCell>
+                                  <TableCell className="text-right">{item.totalQuantity.toLocaleString()}</TableCell>
+                                  <TableCell className="text-right">
+                                    {item.totalCost.toLocaleString("en-IN")}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </AccordionContent>
+                      </AccordionItem>
                     ))}
                 </Accordion>
             ) : (

@@ -17,20 +17,20 @@ export function AppHeader() {
   const { user, logout } = useAuth();
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/95 px-lg backdrop-blur-md shadow-custom-sm">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-background/80 px-lg backdrop-blur-md shadow-custom-sm">
       <div className="flex items-center gap-md">
         <div className="bg-gradient-primary text-primary-foreground p-2 rounded-custom shadow-custom">
-            <HeartPulse className="w-5 h-5" />
+          <HeartPulse className="w-5 h-5" />
         </div>
         <h1 className="text-xl font-semibold font-headline text-gradient">HealthProcure</h1>
       </div>
-      
+
       <div className="flex items-center gap-sm">
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
-                variant="secondary"
+                variant="outline"
                 className="flex items-center gap-md h-auto px-md py-2 rounded-custom shadow-custom-sm hover:shadow-custom transition-all duration-200"
               >
                 <div className="text-right hidden sm:block">

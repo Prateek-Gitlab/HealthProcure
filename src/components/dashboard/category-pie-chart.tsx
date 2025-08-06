@@ -48,10 +48,8 @@ export function CategoryPieChart({
   return (
     <Card className="flex flex-col h-full">
       <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>
-          {description}
-        </CardDescription>
+        <CardTitle className="text-gradient">{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex items-center justify-center">
         {chartData.length > 0 ? (

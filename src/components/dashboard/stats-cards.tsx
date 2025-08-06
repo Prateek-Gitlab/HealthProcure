@@ -51,10 +51,10 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
   }
 
   const cardStyle = (filter: FilterStatus) => cn(
-    "transition-all duration-200 cursor-pointer hover:scale-105 animate-fade-in",
+    "transition-all duration-200 cursor-pointer hover:scale-[1.02] animate-fade-in rounded-custom overflow-hidden",
     activeFilter === filter
-      ? "bg-primary text-white shadow-custom-lg border-primary/20"
-      : "shadow-custom hover:shadow-custom-md border-border",
+      ? "bg-gradient-primary text-white shadow-custom-lg border-0"
+      : "bg-card shadow-custom hover:shadow-custom-md border-border"
   );
 
   const iconStyle = (filter: FilterStatus) => cn(
@@ -112,13 +112,12 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
       {cardsData.map((card, index) => (
         <Card
           key={card.id}
-          variant={activeFilter === card.id ? "default" : "elevated"}
+          variant={activeFilter === card.id ? "gradient" : "elevated"}
           className={cn(
             cardStyle(card.id as FilterStatus),
-            activeFilter !== card.id && `bg-gradient-to-br ${card.gradient}`,
-            "animate-fade-in"
+            activeFilter !== card.id && `bg-gradient-to-br ${card.gradient}`
           )}
-          style={{ animationDelay: `${index * 100}ms` }}
+          style={{ animationDelay: `${index * 80}ms` }}
           onClick={() => handleCardClick(card.id as FilterStatus)}
         >
           <CardHeader className="pb-2">
@@ -146,7 +145,7 @@ export function StatsCards({ requests, userRole, activeFilter, onFilterChange }:
             </div>
             <div className={cn(
               iconStyle(card.id as FilterStatus),
-              "transform transition-transform duration-200 hover:scale-110"
+              "transform transition-transform duration-200 hover:scale-110 shadow-custom-sm"
             )}>
               <card.Icon className={cn(
                 "h-5 w-5 transition-colors duration-200",

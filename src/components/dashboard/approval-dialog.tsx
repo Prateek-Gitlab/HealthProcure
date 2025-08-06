@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { ProcurementRequest, User } from "@/lib/data";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -94,31 +95,36 @@ export function ApprovalDialog({
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent className="rounded-custom shadow-custom-lg">
         <AlertDialogHeader>
-          <AlertDialogTitle>Confirm Request {action}</AlertDialogTitle>
+          <AlertDialogTitle className="text-gradient">Confirm Request {action}</AlertDialogTitle>
           <AlertDialogDescription>
             You are about to {action.toLowerCase()} request{" "}
             <span className="font-bold">{request.id}</span>. This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="py-4">
-            <Label htmlFor="comment">Add a comment (optional)</Label>
-            <Textarea 
-                id="comment"
-                placeholder="Provide a reason or comment for your decision..."
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="mt-2"
-                disabled={isSubmitting}
-            />
+          <Label htmlFor="comment">Add a comment (optional)</Label>
+          <Textarea
+            id="comment"
+            placeholder="Provide a reason or comment for your decision..."
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="mt-2"
+            disabled={isSubmitting}
+          />
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction 
+          <AlertDialogAction
             onClick={handleConfirm}
             disabled={isSubmitting}
-            className={action === 'Reject' ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : ''}
+            className={cn(
+              "focus-ring",
+              action === "Reject"
+                ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                : "bg-success text-success-foreground hover:bg-success/90"
+            )}
           >
             {isSubmitting ? (
               <>
@@ -126,7 +132,7 @@ export function ApprovalDialog({
                 Processing...
               </>
             ) : (
-                `Confirm ${action}`
+              `Confirm ${action}`
             )}
           </AlertDialogAction>
         </AlertDialogFooter>

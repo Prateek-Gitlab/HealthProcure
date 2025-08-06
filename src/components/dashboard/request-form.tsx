@@ -111,9 +111,9 @@ export function RequestForm({
 
   return (
     <Dialog open={isOpen} onOpenChange={onDialogChange}>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="sm:max-w-2xl rounded-custom shadow-custom-lg">
         <DialogHeader>
-          <DialogTitle>Add Items to Request</DialogTitle>
+          <DialogTitle className="text-gradient">Add Items to Request</DialogTitle>
           <DialogDescription>
             Select one or more items from the list below to add to your new request list.
           </DialogDescription>
@@ -123,12 +123,13 @@ export function RequestForm({
             onSubmit={form.handleSubmit(handleFormSubmit)}
             className="space-y-4"
           >
-            <Input 
-                placeholder="Search for an item..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+            <Input
+              placeholder="Search for an item..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="rounded-custom"
             />
-            <ScrollArea className="h-72 w-full rounded-md border p-4">
+            <ScrollArea className="h-72 w-full rounded-custom border p-4 shadow-custom-sm">
               <FormField
                 control={form.control}
                 name="items"
@@ -138,42 +139,32 @@ export function RequestForm({
                       <div key={category}>
                         <FormLabel className="text-base font-semibold">{category}</FormLabel>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                        {items.map((item) => (
-                          <FormField
-                            key={item}
-                            control={form.control}
-                            name="items"
-                            render={({ field: itemField }) => {
-                              return (
-                                <FormItem
-                                  key={item}
-                                  className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3"
-                                >
-                                  <FormControl>
-                                    <Checkbox
-                                      checked={itemField.value?.includes(item)}
-                                      onCheckedChange={(checked) => {
-                                        return checked
-                                          ? itemField.onChange([
-                                              ...(itemField.value || []),
-                                              item,
-                                            ])
-                                          : itemField.onChange(
-                                            itemField.value?.filter(
-                                                (value) => value !== item
-                                              )
-                                            );
-                                      }}
-                                    />
-                                  </FormControl>
-                                  <FormLabel className="font-normal">
-                                    {item}
-                                  </FormLabel>
-                                </FormItem>
-                              );
-                            }}
-                          />
-                        ))}
+                          {items.map((item) => (
+                            <FormField
+                              key={item}
+                              control={form.control}
+                              name="items"
+                              render={({ field: itemField }) => {
+                                return (
+                                  <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-custom border p-3 shadow-custom-sm">
+                                    <FormControl>
+                                      <Checkbox
+                                        checked={itemField.value?.includes(item)}
+                                        onCheckedChange={(checked) => {
+                                          return checked
+                                            ? itemField.onChange([...(itemField.value || []), item])
+                                            : itemField.onChange(
+                                                itemField.value?.filter((value) => value !== item)
+                                              );
+                                        }}
+                                      />
+                                    </FormControl>
+                                    <FormLabel className="font-normal">{item}</FormLabel>
+                                  </FormItem>
+                                );
+                              }}
+                            />
+                          ))}
                         </div>
                       </div>
                     ))}
@@ -182,14 +173,12 @@ export function RequestForm({
               />
             </ScrollArea>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onDialogChange(false)}
-              >
+              <Button type="button" variant="ghost" onClick={() => onDialogChange(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Add Selected Items</Button>
+              <Button type="submit" variant="gradient">
+                Add Selected Items
+              </Button>
             </DialogFooter>
           </form>
         </Form>
