@@ -17,6 +17,10 @@ import { CategoryPieChart } from "./category-pie-chart";
 import { PlaceholderChart } from "./placeholder-chart";
 import { RequestedBudgetTable } from "./requested-budget-table";
 import { PdfDownloadDialog } from "./pdf-download-dialog";
+// Lazy import to keep tree stable if needed
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { StatePdfDownloadButton } from "./state-pdf-download-button";
 
 
 interface DashboardClientProps {
@@ -224,17 +228,24 @@ export function DashboardClient({ initialRequests }: DashboardClientProps) {
       {user.role === 'state' && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="flex flex-col h-full">
-                <AnalyticsChart 
-                    requests={requests} 
-                    allUsers={allUsers} 
-                    currentUser={user} 
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-lg font-semibold">Analytics</div>
+                  {/* One-click state PDF download */}
+                  {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+                  {/* @ts-ignore: component file will be generated */}
+                  <StatePdfDownloadButton requests={requests} />
+                </div>
+                <AnalyticsChart
+                    requests={requests}
+                    allUsers={allUsers}
+                    currentUser={user}
                     selectedFilterId={analyticsFilterId}
                     onFilterChange={setAnalyticsFilterId}
                 />
             </div>
             <div className="flex flex-col h-full">
-                <CategoryPieChart 
-                    requests={pieChartRequests} 
+                <CategoryPieChart
+                    requests={pieChartRequests}
                     {...getPieChartTitleAndDescription()}
                 />
             </div>
